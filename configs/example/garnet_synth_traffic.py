@@ -27,7 +27,6 @@
 # Author: Tushar Krishna
 
 from __future__ import print_function
-from __future__ import absolute_import
 
 import m5
 from m5.objects import *
@@ -88,6 +87,9 @@ parser.add_option("--inj-vnet", type="int", default=-1,
 #
 Ruby.define_options(parser)
 
+exec(compile(open(os.path.join(config_root, "common", "Options.py")).read(),
+             os.path.join(config_root, "common", "Options.py"), 'exec'))
+
 (options, args) = parser.parse_args()
 
 if args:
@@ -145,7 +147,7 @@ root = Root(full_system = False, system = system)
 root.system.mem_mode = 'timing'
 
 # Not much point in this being higher than the L1 latency
-m5.ticks.setGlobalFrequency('1ps')
+m5.ticks.setGlobalFrequency('1ns')
 
 # instantiate configuration
 m5.instantiate()

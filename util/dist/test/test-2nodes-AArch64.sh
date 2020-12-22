@@ -36,6 +36,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# Authors: Gabor Dozsa
+#
+#
 # This is an example script to start a dist gem5 simulations using
 # two AArch64 systems. It is also uses the example
 # dist gem5 bootscript util/dist/test/simple_bootscript.rcS that will

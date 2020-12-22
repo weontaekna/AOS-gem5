@@ -23,6 +23,9 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Nathan Binkert
+#          Lisa Hsu
 
 class ChartOptions(object):
     defaults = { 'chart_size' : (8, 4),
@@ -54,15 +57,15 @@ class ChartOptions(object):
     def update(self, options=None, **kwargs):
         if options is not None:
             if not isinstance(options, ChartOptions):
-                raise AttributeError(
-                    'attribute options of type %s should be %s' %
-                    (type(options), ChartOptions))
+                raise AttributeError, \
+                      'attribute options of type %s should be %s' % \
+                      (type(options), ChartOptions)
             self.options.update(options.options)
 
-        for key,value in kwargs.items():
+        for key,value in kwargs.iteritems():
             if key not in ChartOptions.defaults:
-                raise AttributeError(
-                    "%s instance has no attribute '%s'" % (type(self), key))
+                raise AttributeError, \
+                      "%s instance has no attribute '%s'" % (type(self), key)
             self.options[key] = value
 
     def __getattr__(self, attr):
@@ -72,7 +75,8 @@ class ChartOptions(object):
         if attr in ChartOptions.defaults:
             return ChartOptions.defaults[attr]
 
-        raise AttributeError("%s instance has no attribute '%s'" % (type(self), attr))
+        raise AttributeError, \
+              "%s instance has no attribute '%s'" % (type(self), attr)
 
     def __setattr__(self, attr, value):
         if attr in ChartOptions.defaults:

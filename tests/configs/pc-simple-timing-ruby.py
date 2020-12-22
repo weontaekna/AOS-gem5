@@ -23,12 +23,14 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Nilay Vaish
 
 import m5, os, optparse, sys
 from m5.objects import *
 m5.util.addToPath('../configs/')
 from common.Benchmarks import SysConfig
-from common import FSConfig, SysPaths
+from common import FSConfig
 from ruby import Ruby
 from common import Options
 
@@ -49,10 +51,9 @@ options.l2_assoc=2
 options.num_cpus = 2
 
 #the system
-mdesc = SysConfig(disks = ['linux-x86.img'])
+mdesc = SysConfig(disk = 'linux-x86.img')
 system = FSConfig.makeLinuxX86System('timing', options.num_cpus,
                                      mdesc=mdesc, Ruby=True)
-system.kernel = SysPaths.binary('x86_64-vmlinux-2.6.22.9')
 # Dummy voltage domain for all our clock domains
 system.voltage_domain = VoltageDomain(voltage = options.sys_voltage)
 
@@ -78,7 +79,14 @@ for (i, cpu) in enumerate(system.cpu):
     # create the interrupt controller
     cpu.createInterruptController()
     # Tie the cpu ports to the correct ruby system ports
-    system.ruby._cpu_ports[i].connectCpuPorts(cpu)
+    cpu.icache_port = system.ruby._cpu_ports[i].slave
+    cpu.dcache_port = system.ruby._cpu_ports[i].slave
+    cpu.itb.walker.port = system.ruby._cpu_ports[i].slave
+    cpu.dtb.walker.port = system.ruby._cpu_ports[i].slave
+
+    cpu.interrupts[0].pio = system.ruby._cpu_ports[i].master
+    cpu.interrupts[0].int_master = system.ruby._cpu_ports[i].slave
+    cpu.interrupts[0].int_slave = system.ruby._cpu_ports[i].master
 
 root = Root(full_system = True, system = system)
 m5.ticks.setGlobalFrequency('1THz')

@@ -23,13 +23,18 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Nathan Binkert
 
-CFLAGS ?= -g -O0
+CCFLAGS= -g -O0
 
 default: m5term
 
 m5term: term.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	$(CC) $(LFLAGS) -o $@ $^
+
+install: m5term
+	$(SUDO) install -o root -m 555 m5term /usr/local/bin
 
 clean:
 	@rm -f m5term *~ .#*

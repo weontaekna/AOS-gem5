@@ -24,9 +24,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-from __future__ import print_function
-from __future__ import absolute_import
+#
+# Authors: Ron Dreslinski
+#          Anastasiia Butko
+#          Louisa Bessad
 
 from m5.objects import *
 
@@ -197,4 +198,4 @@ class L2(Cache):
     # Simple stride prefetcher
     prefetcher = StridePrefetcher(degree=8, latency = 1)
     tags = BaseSetAssoc()
-    replacement_policy = RandomRP()
+    repl_policy = RandomRP()

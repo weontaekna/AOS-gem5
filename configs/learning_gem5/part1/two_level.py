@@ -24,6 +24,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Jason Power
 
 """ This file creates a single CPU and a two-level cache system.
 This script takes a single parameter which specifies a binary to execute.
@@ -39,7 +41,6 @@ IMPORTANT: If you modify this file, it's likely that the Learning gem5 book
 """
 
 from __future__ import print_function
-from __future__ import absolute_import
 
 # import the m5 (gem5) library created when gem5 is built
 import m5
@@ -65,10 +66,7 @@ SimpleOpts.set_usage("usage: %prog [options] <binary to execute>")
 isa = str(m5.defines.buildEnv['TARGET_ISA']).lower()
 
 # Default to running 'hello', use the compiled ISA to find the binary
-# grab the specific path to the binary
-thispath = os.path.dirname(os.path.realpath(__file__))
-binary = os.path.join(thispath, '../../../',
-                      'tests/test-progs/hello/bin/', isa, 'linux/hello')
+binary = 'tests/test-progs/hello/bin/' + isa + '/linux/hello'
 
 # Check if there was a binary passed in via the command line and error if
 # there are too many arguments
@@ -132,12 +130,9 @@ if m5.defines.buildEnv['TARGET_ISA'] == "x86":
 system.system_port = system.membus.slave
 
 # Create a DDR3 memory controller
-system.mem_ctrl = MemCtrl()
-system.mem_ctrl.dram = DDR3_1600_8x8()
-system.mem_ctrl.dram.range = system.mem_ranges[0]
+system.mem_ctrl = DDR3_1600_8x8()
+system.mem_ctrl.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.master
-
-system.workload = SEWorkload.init_compatible(binary)
 
 # Create a process for a simple "Hello World" application
 process = Process()

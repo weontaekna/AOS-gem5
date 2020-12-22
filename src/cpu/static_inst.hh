@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2020 ARM Limited
+ * Copyright (c) 2017 ARM Limited
  * All rights reserved
  *
  * The license below extends only to copyright in the software and shall
@@ -37,6 +37,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors: Steve Reinhardt
  */
 
 #ifndef __CPU_STATIC_INST_HH__
@@ -64,15 +66,11 @@ class Packet;
 
 class ExecContext;
 
-namespace Loader
-{
 class SymbolTable;
-} // namespace Loader
 
-namespace Trace
-{
-class InstRecord;
-} // namespace Trace
+namespace Trace {
+    class InstRecord;
+}
 
 /**
  * Base, ISA-independent static instruction class.
@@ -92,17 +90,6 @@ class StaticInst : public RefCounted, public StaticInstFlags
         MaxInstSrcRegs = TheISA::MaxInstSrcRegs,        //< Max source regs
         MaxInstDestRegs = TheISA::MaxInstDestRegs       //< Max dest regs
     };
-
-    using RegIdArrayPtr = RegId (StaticInst:: *)[];
-
-  private:
-    /// See srcRegIdx().
-    RegId _srcRegIdx[MaxInstSrcRegs];
-    RegIdArrayPtr _srcRegIdxPtr = nullptr;
-
-    /// See destRegIdx().
-    RegId _destRegIdx[MaxInstDestRegs];
-    RegIdArrayPtr _destRegIdxPtr = nullptr;
 
   protected:
 
@@ -134,6 +121,8 @@ class StaticInst : public RefCounted, public StaticInstFlags
     /** @} */
 
   public:
+
+    uint16_t _imm16; //yh+
 
     /// @name Register information.
     /// The sum of numFPDestRegs(), numIntDestRegs(), numVecDestRegs(),
@@ -168,11 +157,7 @@ class StaticInst : public RefCounted, public StaticInstFlags
 
     bool isNop()          const { return flags[IsNop]; }
 
-    bool
-    isMemRef() const
-    {
-        return flags[IsLoad] || flags[IsStore] || flags[IsAtomic];
-    }
+    bool isMemRef()       const { return flags[IsMemRef]; }
     bool isLoad()         const { return flags[IsLoad]; }
     bool isStore()        const { return flags[IsStore]; }
     bool isAtomic()       const { return flags[IsAtomic]; }
@@ -185,6 +170,7 @@ class StaticInst : public RefCounted, public StaticInstFlags
     bool isInteger()      const { return flags[IsInteger]; }
     bool isFloating()     const { return flags[IsFloating]; }
     bool isVector()       const { return flags[IsVector]; }
+    bool isCC()           const { return flags[IsCC]; }
 
     bool isControl()      const { return flags[IsControl]; }
     bool isCall()         const { return flags[IsCall]; }
@@ -193,22 +179,20 @@ class StaticInst : public RefCounted, public StaticInstFlags
     bool isIndirectCtrl() const { return flags[IsIndirectControl]; }
     bool isCondCtrl()     const { return flags[IsCondControl]; }
     bool isUncondCtrl()   const { return flags[IsUncondControl]; }
+    bool isCondDelaySlot() const { return flags[IsCondDelaySlot]; }
 
+    bool isThreadSync()   const { return flags[IsThreadSync]; }
     bool isSerializing()  const { return flags[IsSerializing] ||
                                       flags[IsSerializeBefore] ||
                                       flags[IsSerializeAfter]; }
     bool isSerializeBefore() const { return flags[IsSerializeBefore]; }
     bool isSerializeAfter() const { return flags[IsSerializeAfter]; }
     bool isSquashAfter() const { return flags[IsSquashAfter]; }
-    bool
-    isFullMemBarrier() const
-    {
-        return flags[IsReadBarrier] && flags[IsWriteBarrier];
-    }
-    bool isReadBarrier() const { return flags[IsReadBarrier]; }
+    bool isMemBarrier()   const { return flags[IsMemBarrier]; }
     bool isWriteBarrier() const { return flags[IsWriteBarrier]; }
     bool isNonSpeculative() const { return flags[IsNonSpeculative]; }
     bool isQuiesce() const { return flags[IsQuiesce]; }
+    bool isIprAccess() const { return flags[IsIprAccess]; }
     bool isUnverifiable() const { return flags[IsUnverifiable]; }
     bool isSyscall() const { return flags[IsSyscall]; }
     bool isMacroop() const { return flags[IsMacroop]; }
@@ -216,18 +200,26 @@ class StaticInst : public RefCounted, public StaticInstFlags
     bool isDelayedCommit() const { return flags[IsDelayedCommit]; }
     bool isLastMicroop() const { return flags[IsLastMicroop]; }
     bool isFirstMicroop() const { return flags[IsFirstMicroop]; }
-    // hardware transactional memory
-    // HtmCmds must be identified as such in order
-    // to provide them with necessary memory ordering semantics.
-    bool isHtmStart() const { return flags[IsHtmStart]; }
-    bool isHtmStop() const { return flags[IsHtmStop]; }
-    bool isHtmCancel() const { return flags[IsHtmCancel]; }
-
-    bool
-    isHtmCmd() const
-    {
-        return isHtmStart() || isHtmStop() || isHtmCancel();
-    }
+    //This flag doesn't do anything yet
+    bool isMicroBranch() const { return flags[IsMicroBranch]; }
+    //yh+begin
+    bool isPacma() const { return flags[IsPacma]; }
+    bool isXpacm() const { return flags[IsXpacm]; }
+    bool isBndstr() const { return flags[IsBndstr]; }
+    bool isBndclr() const { return flags[IsBndclr]; }
+    bool isBndStore() const { return flags[IsBndStore]; }
+    bool isNeonLoad() const { return flags[IsNeonLoad]; }
+    bool isPaciasp() const { return flags[IsPaciasp]; }
+    bool isAutiasp() const { return flags[IsAutiasp]; }
+    bool isRetaa() const { return flags[IsRetaa]; }
+    bool isPacib() const { return flags[IsPacib]; }
+    bool isPacda() const { return flags[IsPacda]; }
+    bool isAutib() const { return flags[IsAutib]; }
+    bool isAutda() const { return flags[IsAutda]; }
+    bool isAutm() const { return flags[IsAutm]; }
+    bool isBlraa() const { return flags[IsBlraa]; }
+    bool isBraa() const { return flags[IsBraa]; }
+    //yh+end
     //@}
 
     void setFirstMicroop() { flags[IsFirstMicroop] = true; }
@@ -241,23 +233,11 @@ class StaticInst : public RefCounted, public StaticInstFlags
 
     /// Return logical index (architectural reg num) of i'th destination reg.
     /// Only the entries from 0 through numDestRegs()-1 are valid.
-    const RegId &destRegIdx(int i) const { return (this->*_destRegIdxPtr)[i]; }
-
-    void
-    setDestRegIdx(int i, const RegId &val)
-    {
-        (this->*_destRegIdxPtr)[i] = val;
-    }
+    const RegId& destRegIdx(int i) const { return _destRegIdx[i]; }
 
     /// Return logical index (architectural reg num) of i'th source reg.
     /// Only the entries from 0 through numSrcRegs()-1 are valid.
-    const RegId &srcRegIdx(int i) const { return (this->*_srcRegIdxPtr)[i]; }
-
-    void
-    setSrcRegIdx(int i, const RegId &val)
-    {
-        (this->*_srcRegIdxPtr)[i] = val;
-    }
+    const RegId& srcRegIdx(int i)  const { return _srcRegIdx[i]; }
 
     /// Pointer to a statically allocated "null" instruction object.
     static StaticInstPtr nullStaticInstPtr;
@@ -270,18 +250,10 @@ class StaticInst : public RefCounted, public StaticInstFlags
 
   protected:
 
-    /**
-     * Set the pointers which point to the arrays of source and destination
-     * register indices. These will be defined in derived classes which know
-     * what size they need to be, and installed here so they can be accessed
-     * with the base class accessors.
-     */
-    void
-    setRegIdxArrays(RegIdArrayPtr src, RegIdArrayPtr dest)
-    {
-        _srcRegIdxPtr = src;
-        _destRegIdxPtr = dest;
-    }
+    /// See destRegIdx().
+    RegId _destRegIdx[MaxInstDestRegs];
+    /// See srcRegIdx().
+    RegId _srcRegIdx[MaxInstSrcRegs];
 
     /**
      * Base mnemonic (e.g., "add").  Used by generateDisassembly()
@@ -301,7 +273,7 @@ class StaticInst : public RefCounted, public StaticInstFlags
      * Internal function to generate disassembly string.
      */
     virtual std::string
-    generateDisassembly(Addr pc, const Loader::SymbolTable *symtab) const = 0;
+    generateDisassembly(Addr pc, const SymbolTable *symtab) const = 0;
 
     /// Constructor.
     /// It's important to initialize everything here to a sane
@@ -309,15 +281,10 @@ class StaticInst : public RefCounted, public StaticInstFlags
     /// the fields that are meaningful for the particular
     /// instruction.
     StaticInst(const char *_mnemonic, ExtMachInst _machInst, OpClass __opClass)
-        : _srcRegIdxPtr(
-                reinterpret_cast<RegIdArrayPtr>(&StaticInst::_srcRegIdx)),
-          _destRegIdxPtr(
-                reinterpret_cast<RegIdArrayPtr>(&StaticInst::_destRegIdx)),
-          _opClass(__opClass),
-          _numSrcRegs(0), _numDestRegs(0), _numFPDestRegs(0),
-          _numIntDestRegs(0), _numCCDestRegs(0), _numVecDestRegs(0),
-          _numVecElemDestRegs(0), _numVecPredDestRegs(0), machInst(_machInst),
-          mnemonic(_mnemonic), cachedDisassembly(0)
+        : _opClass(__opClass), _numSrcRegs(0), _numDestRegs(0),
+          _numFPDestRegs(0), _numIntDestRegs(0), _numCCDestRegs(0),
+          _numVecDestRegs(0), _numVecElemDestRegs(0), _numVecPredDestRegs(0),
+          machInst(_machInst), mnemonic(_mnemonic), cachedDisassembly(0)
     { }
 
   public:
@@ -377,7 +344,7 @@ class StaticInst : public RefCounted, public StaticInstFlags
      * should not be cached, this function should be overridden directly.
      */
     virtual const std::string &disassemble(Addr pc,
-        const Loader::SymbolTable *symtab=nullptr) const;
+        const SymbolTable *symtab = 0) const;
 
     /**
      * Print a separator separated list of this instruction's set flag

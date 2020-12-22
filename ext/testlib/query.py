@@ -26,8 +26,8 @@
 #
 # Authors: Sean Wilson
 
-import testlib.terminal as terminal
-import testlib.log as log
+import terminal
+import log
 
 # TODO Refactor print logic out of this so the objects
 # created are separate from print logic.

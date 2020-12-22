@@ -24,13 +24,15 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Brad Beckmann
 
 import math
 import m5
 from m5.objects import *
 from m5.defines import buildEnv
-from .Ruby import create_topology, create_directories
-from .Ruby import send_evicts
+from Ruby import create_topology, create_directories
+from Ruby import send_evicts
 
 #
 # Declare caches used by the protocol
@@ -77,8 +79,14 @@ def create_system(options, full_system, system, dma_ports, bootmem,
                             assoc = options.l1d_assoc,
                             start_index_bit = block_size_bits,
                             is_icache = False)
+        #yh+begin
+        l1b_cache = L1Cache(size = options.l1b_size,
+                            assoc = options.l1b_assoc,
+                            start_index_bit = block_size_bits,
+                            is_icache = False)
+        #yh+end
 
-        prefetcher = RubyPrefetcher()
+        prefetcher = RubyPrefetcher.Prefetcher()
 
         # the ruby random tester reuses num_cpus to specify the
         # number of cpu ports connected to the tester object, which
@@ -94,16 +102,19 @@ def create_system(options, full_system, system, dma_ports, bootmem,
 
         l1_cntrl = L1Cache_Controller(version = i, L1Icache = l1i_cache,
                                       L1Dcache = l1d_cache,
+                                      L1Bcache = l1b_cache, #+yh
                                       l2_select_num_bits = l2_bits,
                                       send_evictions = send_evicts(options),
                                       prefetcher = prefetcher,
                                       ruby_system = ruby_system,
                                       clk_domain = clk_domain,
                                       transitions_per_cycle = options.ports,
-                                      enable_prefetch = False)
+                                      enable_prefetch = True)
+                                      #yonghae- enable_prefetch = False)
 
-        cpu_seq = RubySequencer(version = i,
-                                dcache = l1d_cache, clk_domain = clk_domain,
+        cpu_seq = RubySequencer(version = i, icache = l1i_cache,
+                                dcache = l1d_cache, 
+                                clk_domain = clk_domain,
                                 ruby_system = ruby_system)
 
 
@@ -185,7 +196,6 @@ def create_system(options, full_system, system, dma_ports, bootmem,
         dir_cntrl.responseToDir.slave = ruby_system.network.master
         dir_cntrl.responseFromDir = MessageBuffer()
         dir_cntrl.responseFromDir.master = ruby_system.network.slave
-        dir_cntrl.requestToMemory = MessageBuffer()
         dir_cntrl.responseFromMemory = MessageBuffer()
 
 

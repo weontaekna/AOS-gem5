@@ -32,6 +32,11 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Authors:  Andreas Sandberg
+#            Chuan Zhu
+#            Gabor Dozsa
+#
 
 """This script is the syscall emulation example script from the ARM
 Research Starter Kit on System Modeling. More information can be found
@@ -39,7 +44,6 @@ at: http://www.arm.com/ResearchEnablement/SystemModeling
 """
 
 from __future__ import print_function
-from __future__ import absolute_import
 
 import os
 import m5
@@ -50,7 +54,6 @@ import shlex
 
 m5.util.addToPath('../..')
 
-from common import ObjectList
 from common import MemConfig
 from common.cores.arm import HPI
 
@@ -171,8 +174,6 @@ def create(args):
               (len(processes), args.num_cores))
         sys.exit(1)
 
-    system.workload = SEWorkload.init_compatible(processes[0].executable)
-
     # Assign one workload to each CPU
     for cpu, workload in zip(system.cpu_cluster.cpus, processes):
         cpu.workload = workload
@@ -185,14 +186,14 @@ def main():
 
     parser.add_argument("commands_to_run", metavar="command(s)", nargs='*',
                         help="Command(s) to run")
-    parser.add_argument("--cpu", type=str, choices=list(cpu_types.keys()),
+    parser.add_argument("--cpu", type=str, choices=cpu_types.keys(),
                         default="atomic",
                         help="CPU model to use")
     parser.add_argument("--cpu-freq", type=str, default="4GHz")
     parser.add_argument("--num-cores", type=int, default=1,
                         help="Number of CPU cores")
     parser.add_argument("--mem-type", default="DDR3_1600_8x8",
-                        choices=ObjectList.mem_list.get_names(),
+                        choices=MemConfig.mem_names(),
                         help = "type of memory to use")
     parser.add_argument("--mem-channels", type=int, default=2,
                         help = "number of memory channels")

@@ -29,6 +29,10 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Authors: Matthias Jung
+ *          Abdul Mutaal Ahmad
+ *          Christian Menard
  */
 
 #include "sc_ext.hh"
@@ -361,7 +365,7 @@ SCSlavePort::nb_transport_bw(tlm::tlm_generic_payload& trans,
 SCSlavePort::SCSlavePort(const std::string &name_,
     const std::string &systemc_name,
     ExternalSlave &owner_) :
-    ExternalSlave::ExternalPort(name_, owner_),
+    ExternalSlave::Port(name_, owner_),
     blockingRequest(NULL),
     needToSendRequestRetry(false),
     blockingResponse(NULL),
@@ -380,7 +384,7 @@ SCSlavePort::bindToTransactor(Gem5SlaveTransactor* transactor)
                                                 &SCSlavePort::nb_transport_bw);
 }
 
-ExternalSlave::ExternalPort*
+ExternalSlave::Port*
 SCSlavePortHandler::getExternalPort(const std::string &name,
                                     ExternalSlave &owner,
                                     const std::string &port_data)

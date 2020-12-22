@@ -26,10 +26,19 @@
 #
 # Authors: Sean Wilson
 
-import testlib.helper as helper
+import copy
+import traceback
+
+import helper
+import log
+
+global_fixtures = []
 
 class SkipException(Exception):
     def __init__(self, fixture, testitem):
+        self.fixture = fixture
+        self.testitem = testitem
+
         self.msg = 'Fixture "%s" raised SkipException for "%s".' % (
                fixture.name, testitem.name
         )
@@ -54,7 +63,7 @@ class Fixture(object):
     collector = helper.InstanceCollector()
 
     def __new__(klass, *args, **kwargs):
-        obj = super(Fixture, klass).__new__(klass)
+        obj = super(Fixture, klass).__new__(klass, *args, **kwargs)
         Fixture.collector.collect(obj)
         return obj
 
@@ -62,22 +71,38 @@ class Fixture(object):
         if name is None:
             name = self.__class__.__name__
         self.name = name
-        self._is_global = False
 
     def skip(self, testitem):
         raise SkipException(self.name, testitem.metadata)
 
-    def setup(self, testitem):
+    def schedule_finalized(self, schedule):
+        '''
+        This method is called once the schedule of for tests is known.
+        To enable tests to use the same fixture defintion for each execution
+        fixtures must return a copy of themselves in this method.
+
+        :returns: a copy of this fixture which will be setup/torndown
+          when the test item this object is tied to is about to execute.
+        '''
+        return self.copy()
+
+    def init(self, *args, **kwargs):
         pass
 
-    def post_test_procedure(self, testitem):
+    def setup(self, testitem):
         pass
 
     def teardown(self, testitem):
         pass
 
-    def set_global(self):
-        self._is_global = True
+    def copy(self):
+        return copy.deepcopy(self)
 
-    def is_global(self):
-        return self._is_global
+
+def globalfixture(fixture):
+    '''
+    Store the given fixture as a global fixture. Its setup() method
+    will be called before the first test is executed.
+    '''
+    global_fixtures.append(fixture)
+    return fixture

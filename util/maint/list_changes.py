@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2.7
 #
 # Copyright (c) 2017-2018 Arm Limited
 # All rights reserved
@@ -34,6 +34,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Andreas Sandberg
 
 
 import subprocess
@@ -49,7 +51,7 @@ class Commit(object):
         self._tags = None
 
     def _git(self, args):
-        return subprocess.check_output([ "git", ] + args).decode()
+        return subprocess.check_output([ "git", ] + args)
 
     @property
     def log(self):
@@ -119,7 +121,7 @@ def list_revs(branch, baseline=None, paths=[]):
 
     changes = subprocess.check_output(
         [ "git", "rev-list", query, '--'] + paths
-    ).decode()
+    )
 
     if changes == "":
         return
@@ -137,16 +139,21 @@ def list_changes(upstream, feature, paths=[]):
     upstream_cids = dict([
         (c.change_id, c) for c in upstream_revs if c.change_id is not None ])
 
-    incoming = [r for r in reversed(upstream_revs) \
-        if r.change_id and r.change_id not in feature_cids]
-    outgoing = [r for r in reversed(feature_revs) \
-        if r.change_id and r.change_id not in upstream_cids]
-    common = [r for r in reversed(feature_revs) \
-        if r.change_id in upstream_cids]
-    upstream_unknown = [r for r in reversed(upstream_revs) \
-        if r.change_id is None]
-    feature_unknown = [r for r in reversed(feature_revs) \
-        if r.change_id is None]
+    incoming = filter(
+        lambda r: r.change_id and r.change_id not in feature_cids,
+        reversed(upstream_revs))
+    outgoing = filter(
+        lambda r: r.change_id and r.change_id not in upstream_cids,
+        reversed(feature_revs))
+    common = filter(
+        lambda r: r.change_id in upstream_cids,
+        reversed(feature_revs))
+    upstream_unknown = filter(
+        lambda r: r.change_id is None,
+        reversed(upstream_revs))
+    feature_unknown = filter(
+        lambda r: r.change_id is None,
+        reversed(feature_revs))
 
     return incoming, outgoing, common, upstream_unknown, feature_unknown
 
@@ -177,43 +184,45 @@ def _main():
         list_changes(args.upstream, args.feature, paths=args.paths)
 
     if incoming:
-        print("Incoming changes:")
+        print "Incoming changes:"
         for rev in incoming:
-            print(rev)
-        print()
+            print rev
+        print
 
     if args.show_unknown and upstream_unknown:
-        print("Upstream changes without change IDs:")
+        print "Upstream changes without change IDs:"
         for rev in upstream_unknown:
-            print(rev)
-        print()
+            print rev
+        print
 
     if outgoing:
-        print("Outgoing changes:")
+        print "Outgoing changes:"
         for rev in outgoing:
-            print(rev)
-        print()
+            print rev
+        print
 
     if args.show_common and common:
-        print("Common changes:")
+        print "Common changes:"
         for rev in common:
-            print(rev)
-        print()
+            print rev
+        print
 
     if args.show_unknown and feature_unknown:
-        print("Outgoing changes without change IDs:")
+        print "Outgoing changes without change IDs:"
         for rev in feature_unknown:
-            print(rev)
+            print rev
 
     if args.deep_search:
-        print("Incorrectly rebased changes:")
+        print "Incorrectly rebased changes:"
         all_upstream_revs = list_revs(args.upstream, paths=args.paths)
         all_upstream_cids = dict([
             (c.change_id, c) for c in all_upstream_revs \
             if c.change_id is not None ])
-        incorrect_outgoing = [r for r in outgoing if r.change_id in all_upstream_cids]
+        incorrect_outgoing = filter(
+            lambda r: r.change_id in all_upstream_cids,
+            outgoing)
         for rev in incorrect_outgoing:
-            print(rev)
+            print rev
 
 
 

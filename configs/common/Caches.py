@@ -1,5 +1,4 @@
 # Copyright (c) 2012 ARM Limited
-# Copyright (c) 2020 Barkhausen Institut
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -36,9 +35,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-from __future__ import print_function
-from __future__ import absolute_import
+#
+# Authors: Lisa Hsu
 
 from m5.defines import buildEnv
 from m5.objects import *
@@ -93,7 +91,7 @@ class PageTableWalkerCache(Cache):
     tgts_per_mshr = 12
 
     # the x86 table walker actually writes to the table-walker cache
-    if buildEnv['TARGET_ISA'] in ['x86', 'riscv']:
+    if buildEnv['TARGET_ISA'] == 'x86':
         is_read_only = False
     else:
         is_read_only = True

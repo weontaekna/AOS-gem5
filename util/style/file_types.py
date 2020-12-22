@@ -23,6 +23,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Nathan Binkert
 
 import os
 
@@ -77,7 +79,7 @@ hash_bang = (
     )
 
 # the list of all languages that we detect
-all_languages = frozenset(lang_types.values())
+all_languages = frozenset(lang_types.itervalues())
 all_languages |= frozenset(lang for start,lang in lang_prefixes)
 all_languages |= frozenset(lang for start,lang in hash_bang)
 
@@ -104,7 +106,7 @@ def lang_type(filename, firstline=None, openok=True):
     # if a first line was not provided but the file is ok to open,
     # grab the first line of the file.
     if firstline is None and openok:
-        handle = open(filename, 'r')
+        handle = file(filename, 'r')
         firstline = handle.readline()
         handle.close()
 
@@ -118,7 +120,7 @@ def lang_type(filename, firstline=None, openok=True):
     return None
 
 # directories and files to ignore by default
-default_dir_ignore = frozenset(('build', 'ext'))
+default_dir_ignore = frozenset(('.hg', '.svn', 'build', 'ext'))
 default_file_ignore = frozenset(('parsetab.py', ))
 
 def find_files(base, languages=all_languages,
@@ -173,15 +175,15 @@ def update_file(dst, src, language, mutator):
             mode = 'r+'
         else:
             mode = 'r'
-        src = open(src, mode)
+        src = file(src, mode)
 
     orig_lines = []
 
     # grab all of the lines of the file and strip them of their line ending
-    old_lines = list(line.rstrip('\r\n') for line in src)
+    old_lines = list(line.rstrip('\r\n') for line in src.xreadlines())
     new_lines = list(mutator(old_lines, src.name, language))
 
-    for line in src:
+    for line in src.xreadlines():
         line = line
 
     if inplace:
@@ -196,7 +198,7 @@ def update_file(dst, src, language, mutator):
     elif isinstance(dst, str):
         # if we're not updating in place and a destination file name
         # was provided, create a file object
-        dst = open(dst, 'w')
+        dst = file(dst, 'w')
 
     for line in new_lines:
         dst.write(line)

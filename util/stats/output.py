@@ -23,8 +23,10 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Nathan Binkert
 
-from .chart import ChartOptions
+from chart import ChartOptions
 
 class StatOutput(ChartOptions):
     def __init__(self, jobfile, info, stat=None):
@@ -35,7 +37,7 @@ class StatOutput(ChartOptions):
         self.info = info
 
     def display(self, name, printmode = 'G'):
-        from . import info
+        import info
 
         if printmode == 'G':
             valformat = '%g'
@@ -58,13 +60,13 @@ class StatOutput(ChartOptions):
                         value[i] = 1 / val
 
             valstring = ', '.join([ valformat % val for val in value ])
-            print('%-50s    %s' % (job.name + ':', valstring))
+            print '%-50s    %s' % (job.name + ':', valstring)
 
     def graph(self, name, graphdir, proxy=None):
         from os.path import expanduser, isdir, join as joinpath
-        from .barchart import BarChart
+        from barchart import BarChart
         from matplotlib.numerix import Float, array, zeros
-        import os, re, urllib.request, urllib.parse, urllib.error
+        import os, re, urllib
         from jobfile import crossproduct
 
         confgroups = self.jobfile.groups()
@@ -92,21 +94,21 @@ class StatOutput(ChartOptions):
         if baropts:
             baropts = [ bar for bar in crossproduct(baropts) ]
         else:
-            raise AttributeError('No group selected for graph bars')
+            raise AttributeError, 'No group selected for graph bars'
 
         directory = expanduser(graphdir)
         if not isdir(directory):
             os.mkdir(directory)
         html = file(joinpath(directory, '%s.html' % name), 'w')
-        print('<html>', file=html)
-        print('<title>Graphs for %s</title>' % name, file=html)
-        print('<body>', file=html)
+        print >>html, '<html>'
+        print >>html, '<title>Graphs for %s</title>' % name
+        print >>html, '<body>'
         html.flush()
 
         for options in self.jobfile.options(groups):
             chart = BarChart(self)
 
-            data = [ [ None ] * len(baropts) for i in range(len(groupopts)) ]
+            data = [ [ None ] * len(baropts) for i in xrange(len(groupopts)) ]
             enabled = False
             stacked = 0
             for g,gopt in enumerate(groupopts):
@@ -118,12 +120,12 @@ class StatOutput(ChartOptions):
                         continue
 
                     if proxy:
-                        from . import db
+                        import db
                         proxy.dict['system'] = self.info[job.system]
                     val = self.info.get(job, self.stat)
                     if val is None:
-                        print('stat "%s" for job "%s" not found' % \
-                              (self.stat, job))
+                        print 'stat "%s" for job "%s" not found' % \
+                              (self.stat, job)
 
                     if isinstance(val, (list, tuple)):
                         if len(val) == 1:
@@ -134,18 +136,18 @@ class StatOutput(ChartOptions):
                     data[g][b] = val
 
             if stacked == 0:
-                for i in range(len(groupopts)):
-                    for j in range(len(baropts)):
+                for i in xrange(len(groupopts)):
+                    for j in xrange(len(baropts)):
                         if data[i][j] is None:
                             data[i][j] = 0.0
             else:
-                for i in range(len(groupopts)):
-                    for j in range(len(baropts)):
+                for i in xrange(len(groupopts)):
+                    for j in xrange(len(baropts)):
                         val = data[i][j]
                         if val is None:
                             data[i][j] = [ 0.0 ] * stacked
                         elif len(val) != stacked:
-                            raise ValueError("some stats stacked, some not")
+                            raise ValueError, "some stats stacked, some not"
 
             data = array(data)
             if data.sum() == 0:
@@ -153,9 +155,9 @@ class StatOutput(ChartOptions):
 
             dim = len(data.shape)
             x = data.shape[0]
-            xkeep = [ i for i in range(x) if data[i].sum() != 0 ]
+            xkeep = [ i for i in xrange(x) if data[i].sum() != 0 ]
             y = data.shape[1]
-            ykeep = [ i for i in range(y) if data[:,i].sum() != 0 ]
+            ykeep = [ i for i in xrange(y) if data[:,i].sum() != 0 ]
             data = data.take(xkeep, axis=0)
             data = data.take(ykeep, axis=1)
             if not has_group:
@@ -175,7 +177,7 @@ class StatOutput(ChartOptions):
                     try:
                         chart.legend = self.info.rcategories
                     except:
-                        chart.legend = [ str(i) for i in range(stacked) ]
+                        chart.legend = [ str(i) for i in xrange(stacked) ]
                 else:
                     chart.legend = bdescs
 
@@ -202,11 +204,10 @@ class StatOutput(ChartOptions):
             chart.savefig(joinpath(directory, pngname))
             chart.savefig(joinpath(directory, epsname))
             chart.savefig(joinpath(directory, psname))
-            html_name = urllib.parse.quote(pngname)
-            print('''%s<br><img src="%s"><br>''' % (desc, html_name),
-                file=html)
+            html_name = urllib.quote(pngname)
+            print >>html, '''%s<br><img src="%s"><br>''' % (desc, html_name)
             html.flush()
 
-        print('</body>', file=html)
-        print('</html>', file=html)
+        print >>html, '</body>'
+        print >>html, '</html>'
         html.close()

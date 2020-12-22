@@ -5,9 +5,7 @@ if(${PYTHON_MODULE_EXTENSION} MATCHES "pypy")
 endif()
 
 find_package(Catch 1.9.3)
-if(CATCH_FOUND)
-  message(STATUS "Building interpreter tests using Catch v${CATCH_VERSION}")
-else()
+if(NOT CATCH_FOUND)
   message(STATUS "Catch not detected. Interpreter tests will be skipped. Install Catch headers"
                  " manually or use `cmake -DDOWNLOAD_CATCH=1` to fetch them automatically.")
   return()
@@ -33,9 +31,4 @@ target_link_libraries(test_embed PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 add_custom_target(cpptest COMMAND $<TARGET_FILE:test_embed>
                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
-pybind11_add_module(external_module THIN_LTO external_module.cpp)
-set_target_properties(external_module PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_dependencies(cpptest external_module)
-
 add_dependencies(check cpptest)

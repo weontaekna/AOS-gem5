@@ -1,15 +1,3 @@
-# Copyright (c) 2019-2020 ARM Limited
-# All rights reserved
-#
-# The license below extends only to copyright in the software and shall
-# not be construed as granting a license to any other intellectual
-# property including but not limited to intellectual property relating
-# to a hardware implementation of the functionality of the software
-# licensed hereunder.  You may use the software subject to the license
-# terms below provided that you ensure that this notice is replicated
-# unmodified and in its entirety in all distributions of the software,
-# modified or unmodified, in source code or in binary form.
-#
 # Copyright (c) 2017 Mark D. Hill and David A. Wood
 # All rights reserved.
 #
@@ -44,8 +32,9 @@ loaded by the testlib :class:`testlib.loader.Loader`.
 '''
 import itertools
 
-import testlib.uid as uid
-from testlib.state import Status, Result
+import log
+import uid
+from state import Status, Result
 
 class TestCaseMetadata():
     def __init__(self, name, uid, path, result, status, suite_uid):
@@ -124,21 +113,11 @@ class LoadedTestable(object):
     def runner(self):
         return self.obj.runner
 
-    @property
-    def time(self):
-        return self.metadata.time
-
-    @time.setter
-    def time(self, value):
-        self.metadata.time = value
-
     # TODO Change log to provide status_update, result_update for all types.
     def log_status(self, status):
-        import testlib.log as log
         log.test_log.status_update(self, status)
 
     def log_result(self, result):
-        import testlib.log as log
         log.test_log.result_update(self, result)
 
     def __iter__(self):
@@ -200,8 +179,9 @@ class LoadedLibrary(LoadedTestable):
     Wraps a collection of all loaded test suites and
     provides utility functions for accessing fixtures.
     '''
-    def __init__(self, suites):
+    def __init__(self, suites, global_fixtures):
         LoadedTestable.__init__(self, suites)
+        self.global_fixtures = global_fixtures
 
     def _generate_metadata(self):
         return LibraryMetadata( **{
@@ -216,13 +196,19 @@ class LoadedLibrary(LoadedTestable):
         '''
         return iter(self.obj)
 
+    def all_fixture_tuples(self):
+        return itertools.chain(
+                self.global_fixtures,
+                *(suite.fixtures for suite in self.obj))
+
     def all_fixtures(self):
         '''
         :returns: an interator overall all global, suite,
           and test fixtures
         '''
         return itertools.chain(itertools.chain(
-            *(suite.fixtures for suite in self.obj)),
+                self.global_fixtures,
+                *(suite.fixtures for suite in self.obj)),
             *(self.test_fixtures(suite) for suite in self.obj)
         )
 
@@ -235,11 +221,7 @@ class LoadedLibrary(LoadedTestable):
 
     @property
     def fixtures(self):
-        global_fixtures = []
-        for fixture in self.all_fixtures():
-            if fixture.is_global():
-                global_fixtures.append(fixture)
-        return global_fixtures
+        return self.global_fixtures
 
     @property
     def uid(self):

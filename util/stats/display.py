@@ -23,8 +23,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-from functools import reduce
+#
+# Authors: Nathan Binkert
 
 class Value:
     def __init__(self, value, precision, percent = False):
@@ -64,14 +64,14 @@ class Print:
         value = Value(self.value, self.precision)
         pdf = ''
         cdf = ''
-        if 'pdf' in self.__dict__:
+        if self.__dict__.has_key('pdf'):
             pdf = Value(self.pdf, 2, True)
-        if 'cdf' in self.__dict__:
+        if self.__dict__.has_key('cdf'):
             cdf = Value(self.cdf, 2, True)
 
         output = "%-40s %12s %8s %8s" % (self.name, value, pdf, cdf)
 
-        if descriptions and 'desc' in self.__dict__ and self.desc:
+        if descriptions and self.__dict__.has_key('desc') and self.desc:
             output = "%s # %s" % (output, self.desc)
 
         return output
@@ -88,7 +88,7 @@ class Print:
 
     def display(self):
         if self.doprint():
-            print(self)
+            print self
 
 class VectorDisplay:
     def display(self):
@@ -116,14 +116,14 @@ class VectorDisplay:
         else:
             subnames = [''] * len(value)
 
-        if 'subnames' in self.__dict__:
+        if self.__dict__.has_key('subnames'):
             for i,each in enumerate(self.subnames):
                 if len(each) > 0:
                     subnames[i] = '.%s' % each
 
         subdescs = [self.desc]*len(value)
-        if 'subdescs' in self.__dict__:
-            for i in range(min(len(value), len(self.subdescs))):
+        if self.__dict__.has_key('subdescs'):
+            for i in xrange(min(len(value), len(self.subdescs))):
                 subdescs[i] = self.subdescs[i]
 
         for val,sname,sdesc in map(None, value, subnames, subdescs):
@@ -143,8 +143,8 @@ class VectorDisplay:
             p.display()
 
         if (self.flags & flags_total):
-            if ('pdf' in p.__dict__): del p.__dict__['pdf']
-            if ('cdf' in p.__dict__): del p.__dict__['cdf']
+            if (p.__dict__.has_key('pdf')): del p.__dict__['pdf']
+            if (p.__dict__.has_key('cdf')): del p.__dict__['cdf']
             p.name = self.name + '.total'
             p.desc = self.desc
             p.value = mytotal

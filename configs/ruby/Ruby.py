@@ -36,6 +36,8 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Brad Beckmann
 
 from __future__ import print_function
 
@@ -47,9 +49,7 @@ from m5.util import addToPath, fatal
 
 addToPath('../')
 
-from common import ObjectList
 from common import MemConfig
-from common import FileSystemConfig
 
 from topologies import *
 from network import Network
@@ -76,32 +76,17 @@ def define_options(parser):
     parser.add_option("--numa-high-bit", type="int", default=0,
                       help="high order address bit to use for numa mapping. " \
                            "0 = highest bit, not specified = lowest bit")
-    parser.add_option("--interleaving-bits", type="int", default=0,
-                      help="number of bits to specify interleaving " \
-                           "in directory, memory controllers and caches. "
-                           "0 = not specified")
-    parser.add_option("--xor-low-bit", type="int", default=20,
-                      help="hashing bit for channel selection" \
-                           "see MemConfig for explanation of the default"\
-                           "parameter. If set to 0, xor_high_bit is also"\
-                           "set to 0.")
 
     parser.add_option("--recycle-latency", type="int", default=10,
                       help="Recycle latency for ruby controller input buffers")
 
     protocol = buildEnv['PROTOCOL']
-    exec("from . import %s" % protocol)
+    exec "import %s" % protocol
     eval("%s.define_options(parser)" % protocol)
     Network.define_options(parser)
 
 def setup_memory_controllers(system, ruby, dir_cntrls, options):
-    if (options.numa_high_bit):
-        block_size_bits = options.numa_high_bit + 1 - \
-                          int(math.log(options.num_dirs, 2))
-        ruby.block_size_bytes = 2 ** (block_size_bits)
-    else:
-        ruby.block_size_bytes = options.cacheline_size
-
+    ruby.block_size_bytes = options.cacheline_size
     ruby.memory_size_bits = 48
 
     index = 0
@@ -129,27 +114,20 @@ def setup_memory_controllers(system, ruby, dir_cntrls, options):
 
         dir_ranges = []
         for r in system.mem_ranges:
-            mem_type = ObjectList.mem_list.get(options.mem_type)
-            dram_intf = MemConfig.create_mem_intf(mem_type, r, index,
-                options.num_dirs, int(math.log(options.num_dirs, 2)),
-                intlv_size, options.xor_low_bit)
-            mem_ctrl = m5.objects.MemCtrl(dram = dram_intf)
+            mem_ctrl = MemConfig.create_mem_ctrl(
+                MemConfig.get(options.mem_type), r, index, options.num_dirs,
+                int(math.log(options.num_dirs, 2)), intlv_size)
 
             if options.access_backing_store:
-                dram_intf.kvm_map=False
+                mem_ctrl.kvm_map=False
 
             mem_ctrls.append(mem_ctrl)
-            dir_ranges.append(mem_ctrl.dram.range)
+            dir_ranges.append(mem_ctrl.range)
 
             if crossbar != None:
                 mem_ctrl.port = crossbar.master
             else:
                 mem_ctrl.port = dir_cntrl.memory
-
-            # Enable low-power DRAM states if option is set
-            if issubclass(mem_type, DRAMInterface):
-                mem_ctrl.dram.enable_dram_powerdown = \
-                        options.enable_dram_powerdown
 
         index += 1
         dir_cntrl.addr_ranges = dir_ranges
@@ -166,7 +144,7 @@ def create_topology(controllers, options):
         found in configs/topologies/BaseTopology.py
         This is a wrapper for the legacy topologies.
     """
-    exec("import topologies.%s as Topo" % options.topology)
+    exec "import topologies.%s as Topo" % options.topology
     topology = eval("Topo.%s(controllers)" % options.topology)
     return topology
 
@@ -176,16 +154,13 @@ def create_system(options, full_system, system, piobus = None, dma_ports = [],
     system.ruby = RubySystem()
     ruby = system.ruby
 
-    # Generate pseudo filesystem
-    FileSystemConfig.config_filesystem(system, options)
-
     # Create the network object
     (network, IntLinkClass, ExtLinkClass, RouterClass, InterfaceClass) = \
         Network.create_network(options, ruby)
     ruby.network = network
 
     protocol = buildEnv['PROTOCOL']
-    exec("from . import %s" % protocol)
+    exec "import %s" % protocol
     try:
         (cpu_sequencers, dir_cntrls, topology) = \
              eval("%s.create_system(options, full_system, system, dma_ports,\
@@ -198,11 +173,6 @@ def create_system(options, full_system, system, piobus = None, dma_ports = [],
     # Create the network topology
     topology.makeTopology(options, network, IntLinkClass, ExtLinkClass,
             RouterClass)
-
-    # Register the topology elements with faux filesystem (SE mode only)
-    if not full_system:
-        topology.registerTopology(options)
-
 
     # Initialize network based on topology
     Network.init_network(options, network, InterfaceClass)
@@ -226,7 +196,11 @@ def create_system(options, full_system, system, piobus = None, dma_ports = [],
     # Connect the cpu sequencers and the piobus
     if piobus != None:
         for cpu_seq in cpu_sequencers:
-            cpu_seq.connectIOPorts(piobus)
+            cpu_seq.pio_master_port = piobus.slave
+            cpu_seq.mem_master_port = piobus.slave
+
+            if buildEnv['TARGET_ISA'] == "x86":
+                cpu_seq.pio_slave_port = piobus.master
 
     ruby.number_of_virtual_networks = ruby.network.number_of_virtual_networks
     ruby._cpu_ports = cpu_sequencers
