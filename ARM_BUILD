@@ -1,1 +1,1 @@
-scons ./build/ARM_MESI_Two_Level/gem5.opt -j8
+scons ./build/ARM_MESI_Three_Level/gem5.opt -j8

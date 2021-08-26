@@ -46,7 +46,7 @@ MCQ<Impl>::MCQ(O3CPU *cpu_ptr, IEW *iew_ptr, DerivO3CPUParams *params)
     }
 
     isBtAllocated = false;
-    btBaseAddr = 0x1FFF00000000;
+    btBaseAddr = 0x1FF000000000;
 
     const std::string scheme = params->simulateScheme;
 
@@ -54,7 +54,12 @@ MCQ<Impl>::MCQ(O3CPU *cpu_ptr, IEW *iew_ptr, DerivO3CPUParams *params)
         needBtAllocated = false;
     } else if (scheme.compare("AOS") == 0) {
         needBtAllocated = true;
+    } else if (scheme.compare("WYFY") == 0) {
+        needBtAllocated = true;
+    } else if (scheme.compare("Taint") == 0) {
+        needBtAllocated = true;
     } else {
+        cout << scheme << "\n";
         assert(false && "Wrong simulate Scheme\n");
     }
 
@@ -147,10 +152,11 @@ MCQ<Impl>::tick()
             ThreadID tid = *threads++;
 
             cpu->thread[tid]->getProcessPtr()->allocateMem(btBaseAddr, btSize);
+
+            printf("[AOS] Bound table is allocated! btBaseAddr [v:%lx, p:%lx]  btSize: %lu btNumWays: %d\n",
+                    btBaseAddr, TheISA::vtophys(cpu->tcBase(tid), btBaseAddr), btSize, btNumWays);
         }
 
-        printf("[AOS] Bound table is allocated! btSize: %lu btNumWays: %d\n",
-                btSize, btNumWays);
 
         isBtAllocated = true;
     }
@@ -493,6 +499,10 @@ MCQ<Impl>::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
     req->taskId(cpu->taskId());
 
     req->initiateTranslation();
+    // btAddr is physical address
+    // so no need addr translation
+    req->request(0)->setPaddr(TheISA::vtophys(inst->thread->getTC(),
+                              0x1FFFFFFFFFFF & req->request(0)->getVaddr()));
 
     assert(req->isTranslationComplete() && "!req->isTranslationComplete()\n");
 
@@ -590,11 +600,15 @@ MCQ<Impl>::SingleDataRequest::initiateTranslation()
     setState(State::Translation);
     flags.set(Flag::TranslationStarted);
 
-    //_inst->savedReq = this;
-    sendFragmentToTranslation(0);
+    // btAddr is physical address
+    // so no need addr translation
+    setState(State::Complete);
 
-    if (isTranslationComplete()) {
-    }
+    //yh-//_inst->savedReq = this;
+    //yh-sendFragmentToTranslation(0);
+
+    //yh-if (isTranslationComplete()) {
+    //yh-}
 }
 
 template<class Impl>

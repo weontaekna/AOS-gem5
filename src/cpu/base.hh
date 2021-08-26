@@ -384,6 +384,8 @@ class BaseCPU : public MemObject
      */
     EventQueue **comLoadEventQueue;
 
+    EventQueue **comBbcntEventQueue; //yh+
+
     System *system;
 
     /**

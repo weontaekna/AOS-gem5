@@ -115,6 +115,7 @@ class StaticInstFlags(Enum):
         'IsAutib',
         'IsAutda',
         'IsAutm',
+        'IsBbcnt',
         'IsBlraa',
         'IsBraa',
         #yh+end

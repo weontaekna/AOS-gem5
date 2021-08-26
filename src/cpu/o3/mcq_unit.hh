@@ -483,6 +483,12 @@ class MCQUnit
 
     Stats::Scalar mcqLargeBin;
 
+    Stats::Scalar numBndStrFailure;
+
+    Stats::Scalar numBndClrFailure;
+
+    Stats::Scalar numBndChkFailure;
+
   public:
     /** Executes the load at the given index. */
     Fault check(MCQRequest *req, int mck_idx);
@@ -706,7 +712,7 @@ MCQUnit<Impl>::check(MCQRequest *req, int mchk_idx)
     // @todo We should account for cache port contention
     // and arbitrate between loads and stores.
 
-    // if we the cache is not blocked, do cache access
+    // if the cache is not blocked, do cache access
     if (req->senderState() == nullptr) {
         MQSenderState *state = new MQSenderState(
                 mchkQueue.getIterator(mchk_idx));

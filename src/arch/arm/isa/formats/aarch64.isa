@@ -1341,14 +1341,18 @@ namespace Aarch64
 
                 if (bits(machInst, 31, 15) == 0b11011010111000010) {
                     IntRegIndex rm = (IntRegIndex)(uint32_t)bits(machInst, 14, 10);
-                    //IntRegIndex rn = (IntRegIndex)(uint32_t)bits(machInst, 9, 5);
+                    IntRegIndex rn = (IntRegIndex)(uint32_t)bits(machInst, 9, 5);
                     IntRegIndex rd = (IntRegIndex)(uint32_t)bits(machInst, 4, 0);
 
                     //printf("rn: %u INTREG_SPX: %d INTERG_SP: %d\n", rn, INTREG_SPX, INTREG_SP);
 
                     //yh-return new Pacma(machInst, rd, rd, INTREG_X31, rm);
                     //yh-return new Pacma(machInst, rd, rd, INTREG_SPX, rm);
-                    return new Pacma(machInst, rd, rd, INTREG_SPX, rm);
+                    //return new Pacma(machInst, rd, rd, INTREG_SPX, rm);
+										if (rn == INTREG_X31)
+                    	return new Pacma(machInst, rd, rd, INTREG_SPX, rm);
+										else
+	                    return new Pacma(machInst, rd, rd, rn, rm);
                 }
 
                 return new Unknown64(machInst);
@@ -1480,7 +1484,8 @@ namespace Aarch64
 
                         if (bits(machInst, 14, 12) == 0x6) {
                             if (bits(machInst, 11, 10) == 0x0) {
-                                assert(false && "Wrong Pacma decoding found!");
+		                            return new Bbcnt(machInst);
+                                //assert(false && "Wrong Pacma decoding found!");
                             //    return new Pacma(machInst, rd, rd, INTREG_X31);
                             } else if (bits(machInst, 11, 10) == 0x1) {
                                 return new Xpacm(machInst, rd, rd);
@@ -1493,8 +1498,14 @@ namespace Aarch64
                                 return new Unknown64(machInst);
                             }
                         } else if (bits(machInst, 14, 12) == 0x7) {
-                            //printf("Found Autm!\n");
-                            return new Autm(machInst, rd, rd);
+                            if (bits(machInst, 11, 10) == 0x0) {
+		                            //printf("Found Autm!\n");
+		                            return new Autm(machInst, rd, rd);
+														} else {
+		                            //printf("Found bbcnt!\n");
+                                return new Unknown64(machInst);
+		                            //return new Bbcnt(machInst);
+														}
                         } else if (bits(machInst, 14, 12) == 0x0) {
                             if (bits(machInst, 11, 10) == 0x0) {
                                 return new Pacib(machInst, rd, rd, rn);
@@ -1533,7 +1544,7 @@ namespace Aarch64
                                 return new Unknown64(machInst);
                             }
                         } else {
-                            assert(false && "Unknown instruction found! (2)");
+                            //assert(false && "Unknown instruction found! (2)");
                             return new Unknown64(machInst);
                         }
                     //yh+end

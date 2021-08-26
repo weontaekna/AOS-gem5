@@ -265,6 +265,17 @@ class DataXCondSelOp : public ArmStaticInst
 };
 
 //yh+begin
+class AOSX0RegOp : public ArmStaticInst
+{
+  protected:
+    AOSX0RegOp(const char *mnem, ExtMachInst _machInst, OpClass __opClass) :
+        ArmStaticInst(mnem, _machInst, __opClass)
+    {}
+
+    std::string generateDisassembly(
+            Addr pc, const SymbolTable *symtab) const override;
+};
+
 class AOSX1RegOp : public ArmStaticInst
 {
   protected:

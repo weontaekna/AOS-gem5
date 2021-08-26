@@ -120,9 +120,13 @@ class IprPort(FUDesc):
 #yh+begin
 class Sign_Unit(FUDesc):
     opList = [ OpDesc(opClass='Sign', opLat=4) ]
-    count = 4
+    count = 6
 
 class Strip_Unit(FUDesc):
     opList = [ OpDesc(opClass='Strip', opLat=1) ]
-    count = 4
+    count = 6
+
+class WyfyNoOp_Unit(FUDesc):
+    opList = [ OpDesc(opClass='WyfyNoOp', opLat=1) ]
+    count = 16
 #yh+end

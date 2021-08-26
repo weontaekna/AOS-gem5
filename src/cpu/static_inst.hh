@@ -217,6 +217,7 @@ class StaticInst : public RefCounted, public StaticInstFlags
     bool isAutib() const { return flags[IsAutib]; }
     bool isAutda() const { return flags[IsAutda]; }
     bool isAutm() const { return flags[IsAutm]; }
+    bool isBbcnt() const { return flags[IsBbcnt]; }
     bool isBlraa() const { return flags[IsBlraa]; }
     bool isBraa() const { return flags[IsBraa]; }
     //yh+end

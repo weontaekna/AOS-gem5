@@ -331,6 +331,13 @@ DefaultCommit<Impl>::regStats()
         .flags(total)
         ;
 
+    statComBbcnt
+        .init(cpu->numThreads)
+        .name(name() +  ".committedBbcnt")
+        .desc("Number of bbcnt committed")
+        .flags(total)
+        ;
+
     statValidStalls
         .name(name() +  ".commitValidStalls")
         .desc("Number of stall cycles due to validation")
@@ -1486,13 +1493,24 @@ DefaultCommit<Impl>::updateComInstStats(const DynInstPtr &inst)
     // prefetches towards the total commit count.
     //yh-if (!inst->isNop() && !inst->isInstPrefetch()) {
     //yh+begin
-    if (!inst->isNop() && !inst->isInstPrefetch() &&
-        !inst->isBndStore() && !inst->isPacma() && !inst->isPacda() &&
-        !inst->isPacib() && !inst->isAutib() && !inst->isAutda() && !inst->isAutm() &&
-        !inst->isXpacm() && !inst->isPaciasp() && !inst->isAutiasp()) {
+    if (!inst->isNop() && !inst->isInstPrefetch()) {
+        //yh-!inst->isBndStore() && !inst->isPacma() && !inst->isPacda() &&
+        //yh-!inst->isPacib() && !inst->isAutib() && !inst->isAutda() && !inst->isAutm() &&
+				//yh-!inst->isBbcnt() &&
+        //yh-!inst->isXpacm() && !inst->isPaciasp() && !inst->isAutiasp()) {
     //yh+end
         cpu->instDone(tid, inst);
     }
+
+				//if (inst->isPacma())
+				//	printf("Found Pacma!\n");
+				//else if (inst->isBndstr())
+				//	printf("Found Bndstr!\n");
+				//else if (inst->isBndclr())
+				//	printf("Found Bndclr!\n");
+				//else if (inst->isXpacm())
+				//	printf("Found Xpacm!\n");
+
 
     //
     //  Control Instructions
@@ -1533,6 +1551,8 @@ DefaultCommit<Impl>::updateComInstStats(const DynInstPtr &inst)
         statComAutda[tid]++;
     } else if (inst->isAutm()) {
         statComAutm[tid]++;
+    } else if (inst->isBbcnt()) {
+        statComBbcnt[tid]++;
     }
     //yh+end
     if (inst->isMemBarrier()) {

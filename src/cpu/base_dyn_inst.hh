@@ -555,6 +555,7 @@ class BaseDynInst : public ExecContext, public RefCounted
     bool isAutib()         const { return staticInst->isAutib(); }
     bool isAutda()         const { return staticInst->isAutda(); }
     bool isAutm()          const { return staticInst->isAutm(); }
+    bool isBbcnt()          const { return staticInst->isBbcnt(); }
     bool isBlraa()         const { return staticInst->isBlraa(); }
     bool isBraa()          const { return staticInst->isBraa(); }
     //yh+end

@@ -599,6 +599,10 @@ static u64 qarma_64(u64 p, u64 tweakey)
 
 inline u64 qarma_64_enc(u64 p, u64 tweakey)
 {
+	////TODO
+  //u64 k[2] = {0x84be85ce9804e94b, 0xec2802d4e0a488e9};
+	//return (p ^ k[0] ^ tweakey);
+
   u64 k[2] = {0x84be85ce9804e94b, 0xec2802d4e0a488e9};
 	key_spec(k, ENC);
 
@@ -650,6 +654,11 @@ inline void print_pacma(uint64_t a, uint64_t b, uint64_t c, uint64_t d)
 inline void print_pacda(uint64_t a, uint64_t b, uint64_t c)
 {
   printf("[PACDA] Addr: %lu Modifier: %lu PAC: %lu\n", a, b, c);
+}
+
+inline void print_xpacm(uint64_t a, uint64_t b)
+{
+  printf("[XPACM] (%lu) -> (%lu)\n", a, b);
 }
 
 inline void print_addr_modifier(uint64_t a, uint64_t b, int c)

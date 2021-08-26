@@ -622,14 +622,10 @@ let {{
     pacma_code = '''
     Op164 = Op164 & 0x00801FFFFFFFFFFF;
     uint64_t pac = qarma_64_enc(Op164, Op264);
-
-
     uint64_t ahc = getAHC(Op164, Op364);
-
     Dest64 = ((pac >> 8) << 56) | ((pac << 56) >> 9) | ahc | Op164;
     '''
     #print_pacma(Op164, Op264, Op364, pac & 0xFFFF);
-
 
     pacib_code = '''
     uint64_t temp = Op164;
@@ -666,6 +662,7 @@ let {{
     xpacm_code = '''
     Dest64 = Op164 & 0x00801FFFFFFFFFFF;
     '''
+		#print_xpacm(Op164, Dest64);
 
     xpacd_code = '''
     Dest64 = Op164;
@@ -746,8 +743,6 @@ let {{
     #  print_error_autm(ahc);
 
 
-
-
     #uint64_t lr = Op164 & 0x00801FFFFFFFFFFF;
     #uint64_t pac = qarma_64_enc(lr, Op264);
     #uint64_t temp = ((pac >> 8) << 56) | ((pac << 56) >> 9) | lr;
@@ -798,6 +793,9 @@ let {{
 
     buildAOSWork("autm", autm_code, ["IsAutm"], "",
                   "AOSX1RegOp", "AOSX1Reg", "StripOp")
+
+    buildAOSWork("bbcnt", "", ["IsBbcnt"], "",
+                  "AOSX0RegOp", "AOSX0Reg", "WyfyNoOp")
 
 
     retaa_code = '''

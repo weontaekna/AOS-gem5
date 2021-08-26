@@ -459,7 +459,11 @@ def run(options, root, testsys, cpu_class):
     if options.maxinsts:
         for i in range(np):
             testsys.cpu[i].max_insts_any_thread = options.maxinsts
-
+    #yh+begin
+    if options.maxbbcnts:
+        for i in range(np):
+            testsys.cpu[i].max_bbcnts_any_thread = options.maxbbcnts
+    #yh+end
     if cpu_class:
         switch_cpus = [cpu_class(switched_out=True, cpu_id=(i))
                        for i in range(np)]

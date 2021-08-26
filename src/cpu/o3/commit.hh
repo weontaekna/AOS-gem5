@@ -536,6 +536,8 @@ class DefaultCommit
 
     Stats::Vector statComAutm; //yh+
 
+    Stats::Vector statComBbcnt; //yh+
+
     Stats::Scalar statValidStalls; //yh+
 
     uint64_t heartbeat; //yh+

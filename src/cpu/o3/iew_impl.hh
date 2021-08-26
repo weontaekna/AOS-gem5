@@ -121,6 +121,10 @@ DefaultIEW<Impl>::DefaultIEW(O3CPU *_cpu, DerivO3CPUParams *params)
         enabledAOS = false;
     } else if (scheme.compare("AOS") == 0) {
         enabledAOS = true;
+    } else if (scheme.compare("WYFY") == 0) {
+        enabledAOS = true;
+    } else if (scheme.compare("Taint") == 0) {
+        enabledAOS = true;
     } else {
         assert(false && "Wrong simulate Scheme\n");
     }
@@ -1085,6 +1089,7 @@ DefaultIEW<Impl>::dispatchInsts(ThreadID tid)
         }
 
         //yh+begin
+
         if ((inst->isAtomic() || inst->isLoad() || inst->isStore() ||
             inst->isBndStore()) && 
             !(inst->isDataPrefetch() || inst->isInstPrefetch()) &&

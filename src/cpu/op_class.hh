@@ -101,5 +101,6 @@ static const OpClass Num_OpClasses = Enums::Num_OpClass;
 //yh+begin
 static const OpClass SignOp = Enums::Sign;
 static const OpClass StripOp = Enums::Strip;
+static const OpClass WyfyNoOp = Enums::WyfyNoOp;
 //yh+end
 #endif // __CPU__OP_CLASS_HH__

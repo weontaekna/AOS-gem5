@@ -210,6 +210,10 @@ class BaseCPU(MemObject):
         "terminate when all threads have reached this inst count")
     max_insts_any_thread = Param.Counter(0,
         "terminate when any thread reaches this inst count")
+		#yh+begin
+    max_bbcnts_any_thread = Param.Counter(0,
+        "terminate when any thread reaches this bbcnt count")
+		#yh+end
     simpoint_start_insts = VectorParam.Counter([],
         "starting instruction counts of simpoints")
     max_loads_all_threads = Param.Counter(0,

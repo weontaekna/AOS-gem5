@@ -202,6 +202,14 @@ DataXCondSelOp::generateDisassembly(
 
 //yh+begin
 std::string
+AOSX0RegOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
+{
+    std::stringstream ss;
+    printMnemonic(ss, "", false);
+    return ss.str();
+}
+
+std::string
 AOSX1RegOp::generateDisassembly(Addr pc, const SymbolTable *symtab) const
 {
     std::stringstream ss;

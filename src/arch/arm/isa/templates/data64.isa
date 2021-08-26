@@ -279,6 +279,24 @@ def template DataXCondSelConstructor {{
 }};
 
 //yh+begin
+def template AOSX0RegDeclare {{
+class %(class_name)s : public %(base_class)s
+{
+    public:
+        // Constructor
+        %(class_name)s(ExtMachInst machInst);
+        Fault execute(ExecContext *, Trace::InstRecord *) const override;
+};
+}};
+
+def template AOSX0RegConstructor {{
+    %(class_name)s::%(class_name)s(ExtMachInst machInst)
+        : %(base_class)s("%(mnemonic)s", machInst, %(op_class)s)
+    {
+        %(constructor)s;
+    }
+}};
+
 def template AOSX1RegDeclare {{
 class %(class_name)s : public %(base_class)s
 {

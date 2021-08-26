@@ -158,6 +158,10 @@ struct ThreadState : public Serializable {
      */
     Counter numLoad;
 
+		//yh+begin
+		Counter numBbcnt;
+		//yh+end
+
     /** The number of simulated loads committed prior to this run. */
     Counter startNumLoad;
 

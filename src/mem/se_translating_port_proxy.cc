@@ -111,9 +111,14 @@ SETranslatingPortProxy::tryWriteBlob(Addr addr, const uint8_t *p,
                                      PageBytes);
             } else if (allocating == NextPage) {
                 // check if we've accessed the next page on the stack
+								//yh+begin
                 if (!process->fixupStackFault(gen.addr()))
                     panic("Page table fault when accessing virtual address %#x "
-                            "during functional write\n", gen.addr());
+                            "during functional write, addr: %#x\n", gen.addr(), addr);
+								//yh+end
+                //yh-if (!process->fixupStackFault(gen.addr()))
+                //yh-    panic("Page table fault when accessing virtual address %#x "
+                //yh-            "during functional write\n", gen.addr());
             } else {
                 return false;
             }

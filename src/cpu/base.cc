@@ -222,6 +222,21 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
         }
     }
 
+		//yh+begin
+    comBbcntEventQueue = new EventQueue *[numThreads];
+    for (ThreadID tid = 0; tid < numThreads; ++tid)
+        comBbcntEventQueue[tid] = new EventQueue("bbcnt-based event queue");
+
+    if (p->max_bbcnts_any_thread != 0) {
+        const char *cause = "a threads reached the max bbcnt count";
+        for (ThreadID tid = 0; tid < numThreads; ++tid) {
+						const Tick now(comBbcntEventQueue[tid]->getCurTick());
+            Event *event(new LocalSimLoopExitEvent(cause, 0));
+            comBbcntEventQueue[tid]->schedule(event, now + p->max_bbcnts_any_thread);
+        }
+    }
+		//yh+end
+
     functionTracingEnabled = false;
     if (p->function_trace) {
         const string fname = csprintf("ftrace.%s", name());

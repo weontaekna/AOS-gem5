@@ -54,7 +54,7 @@ class OpClass(Enum):
             'SimdSha256Hash', 'SimdSha256Hash2', 'SimdShaSigma2',
             'SimdShaSigma3', 'MemRead', 'MemWrite',
             'FloatMemRead', 'FloatMemWrite',
-            'Sign', 'Strip', #yh+
+            'Sign', 'Strip', 'WyfyNoOp', #yh+
             'IprAccess', 'InstPrefetch']
 
 class OpDesc(SimObject):

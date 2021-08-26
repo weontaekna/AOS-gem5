@@ -7,8 +7,9 @@ from m5.objects import *
 #out_dir = '<FULL_PATH_TO_DESIRED_OUTPUT_DIRECTORY>'
 
 #yonghae- x86_suffix = '_base.x86_64_gcc'
-#x86_suffix = '_base.x86_64_wllvm_inst'
-x86_suffix = '_base.x86_64_wllvm_aos'
+#x86_suffix = '_base.x86_64_wllvm_aos'
+x86_suffix = '_base.x86_64_wllvm_inst'
+#x86_suffix = '_base.x86_64_wllvm_taint'
 
 #x86_suffix = '_base.x86_64_gclang_en'
 #'_base.my-alpha'

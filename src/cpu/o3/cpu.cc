@@ -1625,6 +1625,13 @@ FullO3CPU<Impl>::instDone(ThreadID tid, const DynInstPtr &inst)
     committedOps[tid]++;
 
     probeInstCommit(inst->staticInst);
+
+		//yh+begin
+		if (inst->isBbcnt()) {
+				thread[tid]->numBbcnt++;
+				comBbcntEventQueue[tid]->serviceEvents(thread[tid]->numBbcnt);
+		}
+		//yh+end
 }
 
 template <class Impl>

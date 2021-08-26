@@ -90,7 +90,7 @@ def addNoISAOptions(parser):
     parser.add_option("--mem-ranks", type="int", default=None,
                       help = "number of memory ranks per channel")
     parser.add_option("--mem-size", action="store", type="string",
-                      default="512MB",
+                      default="1024MB",
                       help="Specify the physical memory size (single memory)")
 
 
@@ -227,6 +227,11 @@ def addCommonOptions(parser):
     parser.add_option("-I", "--maxinsts", action="store", type="int",
                       default=None, help="""Total number of instructions to
                                             simulate (default: run forever)""")
+		#yh+begin
+    parser.add_option("--maxbbcnts", action="store", type="int",
+                      default=None, help="""Total number of bbcnt to
+                                            simulate (default: run forever)""")
+		#yh+end
     parser.add_option("--work-item-id", action="store", type="int",
                       help="the specific work id for exit & checkpointing")
     parser.add_option("--num-work-ids", action="store", type="int",
@@ -315,7 +320,7 @@ def addCommonOptions(parser):
                       help="ARM instruction set.")
     # [AOS] add options to configure and scheme
     parser.add_option("--scheme", default=None, action="store", type="choice",
-            choices=["UnsafeBaseline", "AOS", "PA"],
+            choices=["UnsafeBaseline", "AOS", "WYFY", "PA", "Taint"],
             help="choose baseline or defense designs to evaluate")
     parser.add_option("--btNumWays", default=1, action="store", type="int",
             help="Number of ways of bounds table")

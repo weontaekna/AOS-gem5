@@ -63,7 +63,7 @@ from common import MemConfig
 from common.Caches import *
 from common.cpu2000 import *
 
-import spec06_benchmarks
+import spec2017_benchmarks
 
 # Check if KVM support has been enabled, we might need to do VM
 # configuration if that's the case.
@@ -145,105 +145,138 @@ if args:
 numThreads = 1
 
 if options.benchmark:
-    print('Selected SPEC_CPU2006 benchmark')
-    if options.benchmark == 'perlbench':
-        print ('--> perlbench')
-        process = spec06_benchmarks.perlbench
-    elif options.benchmark == 'bzip2':
-        print ('--> bzip2')
-        process = spec06_benchmarks.bzip2
-    elif options.benchmark == 'gcc':
-        print ('--> gcc')
-        process = spec06_benchmarks.gcc
-    elif options.benchmark == 'bwaves':
-        print ('--> bwaves')
-        process = spec06_benchmarks.bwaves
-    elif options.benchmark == 'gamess':
-        print ('--> gamess')
-        process = spec06_benchmarks.gamess
-    elif options.benchmark == 'mcf':
-        print ('--> mcf')
-        process = spec06_benchmarks.mcf
-    elif options.benchmark == 'milc':
-        print ('--> milc')
-        process = spec06_benchmarks.milc
-    elif options.benchmark == 'zeusmp':
-        print ('--> zeusmp')
-        process = spec06_benchmarks.zeusmp
-    elif options.benchmark == 'gromacs':
-        print ('--> gromacs')
-        process = spec06_benchmarks.gromacs
-    elif options.benchmark == 'cactusADM':
-        print ('--> cactusADM')
-        process = spec06_benchmarks.cactusADM
-    elif options.benchmark == 'leslie3d':
-        print ('--> leslie3d')
-        process = spec06_benchmarks.leslie3d
-    elif options.benchmark == 'namd':
-        print ('--> namd')
-        process = spec06_benchmarks.namd
-    elif options.benchmark == 'gobmk':
-        print ('--> gobmk')
-        process = spec06_benchmarks.gobmk
-    elif options.benchmark == 'dealII':
-        print ('--> dealII')
-        process = spec06_benchmarks.dealII
-    elif options.benchmark == 'soplex':
-        print ('--> soplex')
-        process = spec06_benchmarks.soplex
-    elif options.benchmark == 'povray':
-        print ('--> povray')
-        process = spec06_benchmarks.povray
-    elif options.benchmark == 'calculix':
-        print ('--> calculix')
-        process = spec06_benchmarks.calculix
-    elif options.benchmark == 'hmmer':
-        print ('--> hmmer')
-        process = spec06_benchmarks.hmmer
-    elif options.benchmark == 'sjeng':
-        print ('--> sjeng')
-        process = spec06_benchmarks.sjeng
-    elif options.benchmark == 'GemsFDTD':
-        print ('--> GemsFDTD')
-        process = spec06_benchmarks.GemsFDTD
-    elif options.benchmark == 'libquantum':
-        print ('--> libquantum')
-        process = spec06_benchmarks.libquantum
-    elif options.benchmark == 'h264ref':
-        print ('--> h264ref')
-        process = spec06_benchmarks.h264ref
-    elif options.benchmark == 'tonto':
-        print ('--> tonto')
-        process = spec06_benchmarks.tonto
-    elif options.benchmark == 'lbm':
-        print ('--> lbm')
-        process = spec06_benchmarks.lbm
-    elif options.benchmark == 'omnetpp':
-        print ('--> omnetpp')
-        process = spec06_benchmarks.omnetpp
-    elif options.benchmark == 'astar':
-        print ('--> astar')
-        process = spec06_benchmarks.astar
-    elif options.benchmark == 'wrf':
-        print ('--> wrf')
-        process = spec06_benchmarks.wrf
-    elif options.benchmark == 'sphinx3':
-        print ('--> sphinx3')
-        process = spec06_benchmarks.sphinx3
-    elif options.benchmark == 'xalancbmk':
-        print ('--> xalancbmk')
-        process = spec06_benchmarks.xalancbmk
-    elif options.benchmark == 'specrand_i':
-        print ('--> specrand_i')
-        process = spec06_benchmarks.specrand_i
-    elif options.benchmark == 'specrand_f':
-        print ('--> specrand_f')
-        process = spec06_benchmarks.specrand_f
+    print('Selected SPEC_CPU2017 benchmark')
+    if options.benchmark == 'perlbench_r':
+        print ('--> perlbench_r')
+        process = spec2017_benchmarks.perlbench_r
+    elif options.benchmark == 'perlbench_s':
+        print ('--> perlbench_s')
+        process = spec2017_benchmarks.perlbench_s
+    elif options.benchmark == 'gcc_r':
+        print ('--> gcc_r')
+        process = spec2017_benchmarks.gcc_r
+    elif options.benchmark == 'gcc_s':
+        print ('--> gcc_s')
+        process = spec2017_benchmarks.gcc_s
+    elif options.benchmark == 'mcf_r':
+        print ('--> mcf_r')
+        process = spec2017_benchmarks.mcf_r
+    elif options.benchmark == 'mcf_s':
+        print ('--> mcf_s')
+        process = spec2017_benchmarks.mcf_s
+    elif options.benchmark == 'omnetpp_r':
+        print ('--> omnetpp_r')
+        process = spec2017_benchmarks.omnetpp_r
+    elif options.benchmark == 'omnetpp_s':
+        print ('--> omnetpp_s')
+        process = spec2017_benchmarks.omnetpp_s
+    elif options.benchmark == 'xalancbmk_r':
+        print ('--> xalancbmk_r')
+        process = spec2017_benchmarks.xalancbmk_r
+    elif options.benchmark == 'xalancbmk_s':
+        print ('--> xalancbmk_s')
+        process = spec2017_benchmarks.xalancbmk_s
+    elif options.benchmark == 'x264_r':
+        print ('--> x264_r')
+        process = spec2017_benchmarks.x264_r
+    elif options.benchmark == 'x264_s':
+        print ('--> x264_s')
+        process = spec2017_benchmarks.x264_s
+    elif options.benchmark == 'deepsjeng_r':
+        print ('--> deepsjeng_r')
+        process = spec2017_benchmarks.deepsjeng_r
+    elif options.benchmark == 'deepsjeng_s':
+        print ('--> deepsjeng_s')
+        process = spec2017_benchmarks.deepsjeng_s
+    elif options.benchmark == 'leela_r':
+        print ('--> leela_r')
+        process = spec2017_benchmarks.leela_r
+    elif options.benchmark == 'leela_s':
+        print ('--> leela_s')
+        process = spec2017_benchmarks.leela_s
+    elif options.benchmark == 'exchange2_r':
+        print ('--> exchange2_r')
+        process = spec2017_benchmarks.exchange2_r
+    elif options.benchmark == 'exchange2_s':
+        print ('--> exchange2_s')
+        process = spec2017_benchmarks.exchange2_s
+    elif options.benchmark == 'xz_r':
+        print ('--> xz_r')
+        process = spec2017_benchmarks.xz_r
+    elif options.benchmark == 'xz_s':
+        print ('--> xz_s')
+        process = spec2017_benchmarks.xz_s
+    elif options.benchmark == 'bwaves_r':
+        print ('--> bwaves_r')
+        process = spec2017_benchmarks.bwaves_r
+    elif options.benchmark == 'bwaves_s':
+        print ('--> bwaves_s')
+        process = spec2017_benchmarks.bwaves_s
+    elif options.benchmark == 'cactuBSSN_r':
+        print ('--> cactuBSSN_r')
+        process = spec2017_benchmarks.cactuBSSN_r
+    elif options.benchmark == 'cactuBSSN_s':
+        print ('--> cactuBSSN_s')
+        process = spec2017_benchmarks.cactuBSSN_s
+    elif options.benchmark == 'namd_r':
+        print ('--> namd_r')
+        process = spec2017_benchmarks.namd_r
+    elif options.benchmark == 'parest_r':
+        print ('--> parest_r')
+        process = spec2017_benchmarks.parest_r
+    elif options.benchmark == 'povray_r':
+        print ('--> povray_r')
+        process = spec2017_benchmarks.povray_r
+    elif options.benchmark == 'lbm_r':
+        print ('--> lbm_r')
+        process = spec2017_benchmarks.lbm_r
+    elif options.benchmark == 'lbm_s':
+        print ('--> lbm_s')
+        process = spec2017_benchmarks.lbm_s
+    elif options.benchmark == 'wrf_r':
+        print ('--> wrf_r')
+        process = spec2017_benchmarks.wrf_r
+    elif options.benchmark == 'wrf_s':
+        print ('--> wrf_s')
+        process = spec2017_benchmarks.wrf_s
+    elif options.benchmark == 'blender_r':
+        print ('--> blender_r')
+        process = spec2017_benchmarks.blender_r
+    elif options.benchmark == 'cam4_r':
+        print ('--> cam4_r')
+        process = spec2017_benchmarks.cam4_r
+    elif options.benchmark == 'cam4_s':
+        print ('--> cam4_s')
+        process = spec2017_benchmarks.cam4_s
+    elif options.benchmark == 'imagick_r':
+        print ('--> imagick_r')
+        process = spec2017_benchmarks.imagick_r
+    elif options.benchmark == 'imagick_s':
+        print ('--> imagick_s')
+        process = spec2017_benchmarks.imagick_s
+    elif options.benchmark == 'nab_r':
+        print ('--> nab_r')
+        process = spec2017_benchmarks.nab_r
+    elif options.benchmark == 'nab_s':
+        print ('--> nab_s')
+        process = spec2017_benchmarks.nab_s
+    elif options.benchmark == 'fotonik3d_r':
+        print ('--> fotonik3d_r')
+        process = spec2017_benchmarks.fotonik3d_r
+    elif options.benchmark == 'fotonik3d_s':
+        print ('--> fotonik3d_s')
+        process = spec2017_benchmarks.fotonik3d_s
+    elif options.benchmark == 'roms_r':
+        print ('--> roms_r')
+        process = spec2017_benchmarks.roms_r
+    elif options.benchmark == 'roms_s':
+        print ('--> roms_s')
+        process = spec2017_benchmarks.roms_s
     else:
-        print("No recognized SPEC2006 benchmark selected! Exiting.")
+        print("No recognized SPEC2017 benchmark selected! Exiting.")
         sys.exit(1)
 else:
-    print >> sys.stderr, "Need --benchmark switch to specify SPEC CPU2006 workload. Exiting!\n"
+    print >> sys.stderr, "Need --benchmark switch to specify SPEC CPU2017 workload. Exiting!\n"
     sys.exit(1)
 
 if options.benchmark_scheme:
@@ -311,7 +344,7 @@ if options.smt and options.num_cpus > 1:
     fatal("You cannot use SMT with multiple CPUs!")
 
 np = options.num_cpus
-system = System(cpu = [CPUClass(cpu_id=i) for i in xrange(np)],
+system = System(cpu = [CPUClass(cpu_id=i) for i in range(np)],
                 mem_mode = test_mem_mode,
                 mem_ranges = [AddrRange(options.mem_size)],
                 cache_line_size = options.cacheline_size)
@@ -367,7 +400,7 @@ if is_kvm_cpu(CPUClass) or is_kvm_cpu(FutureClass):
 #    if np > 1:
 #        fatal("SimPoint generation not supported with more than one CPUs")
 
-for i in xrange(np):
+for i in range(np):
     system.cpu[i].workload = process
     print(process.cmd)
 
@@ -395,7 +428,7 @@ if options.ruby:
 
     system.ruby.clk_domain = SrcClockDomain(clock = options.ruby_clock,
                                         voltage_domain = system.voltage_domain)
-    for i in xrange(np):
+    for i in range(np):
         ruby_port = system.ruby._cpu_ports[i]
 
         # Create the interrupt controller and connect its ports to Ruby

@@ -549,7 +549,7 @@ static SyscallDesc syscallDescs64[] = {
     /*   46 */ SyscallDesc("ftruncate64", ftruncate64Func),
     /*   47 */ SyscallDesc("fallocate", unimplementedFunc),
     /*   48 */ SyscallDesc("faccessat", faccessatFunc<ArmLinux64>),
-    /*   49 */ SyscallDesc("chdir", unimplementedFunc),
+    /*   49 */ SyscallDesc("chdir", chdirFunc), //yh+
     /*   50 */ SyscallDesc("fchdir", unimplementedFunc),
     /*   51 */ SyscallDesc("chroot", unimplementedFunc),
     /*   52 */ SyscallDesc("fchmod", unimplementedFunc),

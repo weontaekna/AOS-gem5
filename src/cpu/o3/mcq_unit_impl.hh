@@ -155,7 +155,7 @@ MCQUnit<Impl>::writebackStores()
                     else
                         mcqReplayedBoundCheck++;
 
-                    DPRINTF(MCQCheck, "Need replay for this inst [sn:%lli]\n",
+                    DPRINTF(MCQUnit, "Need replay for this inst [sn:%lli]\n",
                             load_it->instruction()->seqNum);
                     load_it->needReplay = true;
 
@@ -235,18 +235,20 @@ MCQUnit<Impl>::commitInsts(InstSeqNum &youngest_inst)
 
         if (x.count >= btNumWays && iter == mchkQueue.begin()) {
             if (x.instruction()->isBndstr() ) {
-                printf("### Occupancy check failed for bounds store inst: ");
+                printf("### Occupancy check failed for bndstr: %lu [sn:%lu]", x.PAC, x.inst_org->seqNum);
                 assert(false);
             } else if (x.instruction()->isBndclr()) {
-                printf("### Occupancy check failed for bounds store inst: ");
+                printf("### Occupancy check failed for bndclr: PAC: %lu addr: %lu [sn:%lu]", x.PAC, x.effAddr, x.inst_org->seqNum);
                 x.instruction()->dump();
                 x.state = ST5;
+								numBndClrFailure++;
             } else {
                 assert(!x.inst_org->isSquashed());
-                printf("### Bounds check failed for bounds check inst: ");
+                printf("### Bounds check failed: PAC: %lu [sn:%lu] ", x.PAC, x.inst_org->seqNum);
                 x.instruction()->dump();
                 x.inst_org->setValidated(true);
                 x.state = ST5;
+								numBndChkFailure++;
             }
         }
 
@@ -342,8 +344,11 @@ MCQUnit<Impl>::completeDataAccess(PacketPtr pkt)
             //Addr ubndData = *(pkt->getPtr<uint64_t>() + (2*i)+1);
 
             Addr bndData = *(pkt->getPtr<uint64_t>() + i);
-            Addr lbndData = (bndData & 0x1FFFFFFF) << 4;
-            Addr ubndData = lbndData + (bndData >> 29);
+            //[CHANGE] Addr lbndData = (bndData & 0x1FFFFFFF) << 4;
+            //[CHANGE] Addr ubndData = lbndData + (bndData >> 29);
+            Addr lbndData = (bndData & 0xFFFFFFFF);
+            //Addr ubndData = lbndData + (bndData >> 32);
+            Addr ubndData = lbndData + (bndData >> 32);
 
             DPRINTF(MCQUnit, "CompleteAccess check, addr: %lu effSize: %u lbndData: %lu "
                    "ubndData: %lu for inst [sn:%lu]\n",
@@ -399,30 +404,46 @@ MCQUnit<Impl>::completeDataAccess(PacketPtr pkt)
                 break;
 
               case ST2:
-                if (occupancyCheck(addr, lbndData, ubndData, inst->isBndstr())) {
-                    if (iter->count != 0) {
-                        DPRINTF(MCQCheck, "Passed occupancyCheck! (%s) bndAddr: %lu lbndData:"
-                                " %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
-                                (iter->instruction()->isBndstr() ? "bndstr" : "bndclr"),
-                                iter->bndAddr, lbndData, ubndData, iter->index, iter->count,
-                                iter->PAC, iter->hash, iter->inst_org->seqNum);
-                        //iter->inst_org->setExecuted();
+                if (!iter->needReplay && occupancyCheck(addr, lbndData, ubndData, inst->isBndstr())) {
+                    if (iter->instruction()->isBndstr()) {
+                        DPRINTF(MCQCheck, "Passed bndstr! bndAddr: %lu PAC: %lu addr: 0x%lx size: %lu bndData: 0x%lx subIndex: %lu [sn:%lli]\n",
+																iter->bndAddr, iter->PAC, iter->effAddr, iter->ubndData - iter->lbndData, iter->bndData, i, iter->inst_org->seqNum);
                         iter->inst_org->setCanCommit();
                         iter->state = ST3;
                         iter->subIndex = i;
                         succeed = true;
-                    } else {
-                        DPRINTF(MCQUnit, "Passed occupancyCheck! (%s) bndAddr: %lu lbndData:"
-                                " %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
-                                (iter->instruction()->isBndstr() ? "bndstr" : "bndclr"),
-                                iter->bndAddr, lbndData, ubndData, iter->index, iter->count,
-                                iter->PAC, iter->hash, iter->inst_org->seqNum);
-                        //iter->inst_org->setExecuted();
+										} else {
+                        DPRINTF(MCQCheck, "Passed bndclr! bndAddr: %lu PAC: %lu addr: 0x%lx lbndData: 0x%lx ubndData: 0x%lx subIndex: %lu [sn:%lli]\n",
+																iter->bndAddr, iter->PAC, iter->effAddr, lbndData, ubndData, i, iter->inst_org->seqNum);
                         iter->inst_org->setCanCommit();
                         iter->state = ST3;
                         iter->subIndex = i;
                         succeed = true;
-                    }
+										}
+
+                    //if (iter->count != 0) {
+                    //    DPRINTF(MCQCheck, "Passed occupancyCheck! (%s) addr: %lu lbndData:"
+                    //            " %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
+                    //            (iter->instruction()->isBndstr() ? "bndstr" : "bndclr"),
+                    //            iter->effAddr, lbndData, ubndData, iter->index, iter->count,
+                    //            iter->PAC, iter->hash, iter->inst_org->seqNum);
+                    //    //iter->inst_org->setExecuted();
+                    //    iter->inst_org->setCanCommit();
+                    //    iter->state = ST3;
+                    //    iter->subIndex = i;
+                    //    succeed = true;
+                    //} else {
+                    //    DPRINTF(MCQCheck, "Passed occupancyCheck! (%s) addr: %lu lbndData:"
+                    //            " %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
+                    //            (iter->instruction()->isBndstr() ? "bndstr" : "bndclr"),
+                    //            iter->effAddr, lbndData, ubndData, iter->index, iter->count,
+                    //            iter->PAC, iter->hash, iter->inst_org->seqNum);
+                    //    //iter->inst_org->setExecuted();
+                    //    iter->inst_org->setCanCommit();
+                    //    iter->state = ST3;
+                    //    iter->subIndex = i;
+                    //    succeed = true;
+                    //}
                 }
 
                 break;
@@ -440,8 +461,11 @@ MCQUnit<Impl>::completeDataAccess(PacketPtr pkt)
             //Addr ubndData = *(pkt->getPtr<uint64_t>()+1);
 
             Addr bndData = *(pkt->getPtr<uint64_t>());
-            Addr lbndData = (bndData & 0x1FFFFFFF) << 4;
-            Addr ubndData = lbndData + (bndData >> 29);
+            //[CHANGE] Addr lbndData = (bndData & 0x1FFFFFFF) << 4;
+            //[CHANGE] Addr ubndData = lbndData + (bndData >> 29);
+            Addr lbndData = (bndData & 0xFFFFFFFF);
+            //Addr ubndData = lbndData + (bndData >> 32);
+            Addr ubndData = lbndData + (bndData >> 32);
 
             switch (iter->state) {
               case ST1:
@@ -474,10 +498,25 @@ MCQUnit<Impl>::completeDataAccess(PacketPtr pkt)
                     readyInsts.push_back(inst);
                 } else {
                     DPRINTF(MCQCheck, "Failed occupancyCheck! (%s) bndAddr: %lu lbndData:"
-                            " %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
+                            " 0x%lx ubndData: 0x%lx index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
                             (iter->instruction()->isBndstr() ? "bndstr" : "bndclr"),
                             iter->bndAddr, lbndData, ubndData, iter->index, iter->count,
                             iter->PAC, iter->hash, iter->inst_org->seqNum);
+
+						        //for (int j=0; j<4; j++) {
+										//	Addr bndData = *(pkt->getPtr<uint64_t>() + j);
+										//	//[CHANGE] Addr lbndData = (bndData & 0x1FFFFFFF) << 4;
+										//	//[CHANGE] Addr ubndData = lbndData + (bndData >> 29);
+										//	Addr lbndData = (bndData & 0xFFFFFFFF);
+										//	//Addr ubndData = lbndData + (bndData >> 32);
+										//	Addr ubndData = lbndData + (bndData >> 32);
+										//	DPRINTF(MCQCheck, "Failed occupancyCheck! (%s) bndAddr: %lu lbndData:"
+										//					" %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
+										//					(iter->instruction()->isBndstr() ? "bndstr" : "bndclr"),
+										//					iter->bndAddr, lbndData, ubndData, iter->index, iter->count,
+										//					iter->PAC, iter->hash, iter->inst_org->seqNum);
+										//}
+
                     iter->state = ST4;
                     readyInsts.push_back(inst);
                 }
@@ -646,6 +685,18 @@ MCQUnit<Impl>::regStats()
     mcqLargeBin
         .name(name() + ".mcqLargeBin")
         .desc("Number of large bin accesses");
+
+		numBndStrFailure
+				.name(name() + ".numBndStrFailure")
+				.desc("Number of bounds store failures");
+
+		numBndClrFailure
+				.name(name() + ".numBndClrFailure")
+				.desc("Number of bounds clear failures");
+
+		numBndChkFailure
+				.name(name() + ".numBndChkFailure")
+				.desc("Number of bounds check failures");
 }
 
 
@@ -910,7 +961,7 @@ MCQUnit<Impl>::getBndAddr(uint64_t PAC, uint64_t index, uint64_t count)
                       (PAC << (N + 3 + 2)) +
                       (((index + count) % (1 << N)) << (3 + 2)));
 
-    DPRINTF(MCQUnit, "PAC: %lu index: %lu count: %lu btBaseAddr %lu bndAddr: %lu\n",
+    DPRINTF(MCQUnit, "PAC: %lu index: %lu count: %lu btBaseAddr: %lu bndAddr: %lu\n",
             PAC, index, count, btBaseAddr, bndAddr);
 
     return bndAddr;
@@ -962,13 +1013,15 @@ MCQUnit<Impl>::setMCQEntry(typename MChkQueue::iterator& iter)
     iter->effAddr = effAddr;
 
     if (inst->isBndstr()) {
-        iter->bndData = bits(effAddr, 32, 4);
-        iter->bndData = iter->bndData + (size << 29);
+        //[CHANGE] iter->bndData = bits(effAddr, 32, 4);
+        //[CHANGE] iter->bndData = iter->bndData + (size << 29);
+        iter->bndData = bits(effAddr, 31, 0);
+        iter->bndData = iter->bndData + (size << 32);
 
         iter->lbndData = effAddr;
         iter->ubndData = effAddr + size;
-        DPRINTF(MCQUnit, "bndstr effAddr: %lu lbndData: %lu ubndData: %lu size: %lu\n",
-            effAddr, iter->lbndData, iter->ubndData, size);
+        DPRINTF(MCQUnit, "PAC:%lu bndstr effAddr: %lu lbndData: %lu ubndData: %lu size: %lu\n",
+            PAC, effAddr, iter->lbndData, iter->ubndData, size);
 
         memcpy(iter->data(), &iter->bndData, 8);
         //memcpy(iter->data(), &iter->lbndData, 8);
@@ -976,6 +1029,8 @@ MCQUnit<Impl>::setMCQEntry(typename MChkQueue::iterator& iter)
         assert(*((uint64_t*) (iter->data())) == iter->bndData);
         //assert(*((uint64_t*) (iter->data()+8)) == iter->ubndData);
     } else if (inst->isBndclr()) {
+        DPRINTF(MCQUnit, "PAC:%lu bndclr effAddr: %lu\n", PAC, effAddr);
+
         iter->bndData = 0;
         //iter->lbndData = 0;
         //iter->ubndData = 0;
@@ -994,10 +1049,12 @@ MCQUnit<Impl>::neonBoundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ub
 
     uint64_t C = 0;
     //if ((bit(addr, 32) == 0) && (bit(lbndData, 32) == 1))
-    if ((bit(addr, 32) == 0) && (bit(neon_lbndData, 32) == 1))
+    //[CHANGE] if ((bit(addr, 32) == 0) && (bit(neon_lbndData, 32) == 1))
+    if ((bit(addr, 31) == 0) && (bit(neon_lbndData, 31) == 1))
         C = 1;
 
-    addr = (C << 33) | bits(addr, 32, 0);
+    //[CHANGE] addr = (C << 33) | bits(addr, 32, 0);
+    addr = (C << 32) | bits(addr, 31, 0);
     //addr = addr & 0x1FFFFFFFF;
 
     //if (!(addr >= neon_lbndData && addr <= neon_ubndData)) {
@@ -1013,16 +1070,24 @@ bool
 MCQUnit<Impl>::boundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndData)
 {
     uint64_t C = 0;
-    if ((bit(addr, 32) == 0) && (bit(lbndData, 32) == 1))
+    //[CHANGE] if ((bit(addr, 32) == 0) && (bit(lbndData, 32) == 1))
+    if ((bit(addr, 31) == 0) && (bit(lbndData, 31) == 1))
         C = 1;
 
-    addr = (C << 33) | bits(addr, 32, 0);
+    //[CHANGE] addr = (C << 33) | bits(addr, 32, 0);
+    addr = (C << 32) | bits(addr, 31, 0);
     //addr = addr & 0x1FFFFFFFF;
 
     DPRINTF(MCQUnit, "boundCheck! addr: %lu effSize: %u lbndData: %lu ubndData: %lu\n",
             addr, effSize, lbndData, ubndData);
 
-    return (addr >= lbndData && addr <= ubndData);
+    //return (addr >= lbndData && addr <= (ubndData+1));
+    //return (addr >= (lbndData - 512) && addr <= (ubndData + 512));
+    //return (addr >= lbndData && (addr + effSize - 1) <= ubndData);
+
+		Addr effLowBnd = lbndData - (lbndData % effSize);
+		//Addr effUppBnd = ubndData + (ubndData % effSize);
+    return (addr >= effLowBnd && addr <= (ubndData+1));
 }
 
 template <class Impl>
@@ -1030,13 +1095,15 @@ bool
 MCQUnit<Impl>::occupancyCheck(Addr addr, Addr lbndData, Addr ubndData, bool empty)
 {
     uint64_t C = 0;
-    if ((bit(addr, 32) == 0) && (bit(lbndData, 32) == 1))
+    //[CHANGE] if ((bit(addr, 32) == 0) && (bit(lbndData, 32) == 1))
+    if ((bit(addr, 31) == 0) && (bit(lbndData, 31) == 1))
         C = 1;
 
-    addr = (C << 33) | bits(addr, 32, 0);
+    //[CHANGE] addr = (C << 33) | bits(addr, 32, 0);
+    addr = (C << 32) | bits(addr, 31, 0);
     //addr = addr & 0x1FFFFFFFF;
 
-    DPRINTF(MCQUnit, "occupancyCheck! addr: %lu lbndData: %lu ubndData: %lu\n",
+    DPRINTF(MCQCheck, "occupancyCheck! addr: %lu lbndData: %lu ubndData: %lu\n",
             addr, lbndData, ubndData);
 
     if (empty)
@@ -1168,11 +1235,13 @@ MCQUnit<Impl>::execute()
 
                 if (iter->count >= btNumWays) {
                     if (inst->isBndstr()) {
-                        printf("### Occupancy check failed for bounds store inst: ");
+                        printf("### Occupancy check failed for bounds store inst: PAC: %lu addr: %lu [sn:%lu]",
+																iter->PAC, iter->effAddr, iter->inst_org->seqNum);
                         iter->instruction()->dump();
                         iter->needReplay = true;
                         reallocBoundTable();
                         readyInsts.push_back(inst);
+												numBndStrFailure++;
                     } else if (inst->isBndclr()) {
                         //iter->inst_org->setExecuted();
                         iter->inst_org->setCanCommit();
@@ -1324,13 +1393,13 @@ template <class Impl>
 void
 MCQUnit<Impl>::reallocBoundTable()
 {
-    uint64_t btBaseAddr_new = mcq->btBaseAddr + mcq->btSize;
+    uint64_t btBaseAddr_new = mcq->btBaseAddr;
     uint64_t btSize_new = (uint64_t) (mcq->btSize << 1); // x2
     int btNumWays_new = (mcq->btNumWays << 1); // x2
     
     ThreadID tid = mcqID;
 
-    cpu->thread[tid]->getProcessPtr()->allocateMem(btBaseAddr_new, btSize_new);
+    cpu->thread[tid]->getProcessPtr()->allocateMem(mcq->btBaseAddr + mcq->btSize, mcq->btSize);
 
     int N = log2(mcq->btNumWays);
     int N_new = log2(btNumWays_new);
@@ -1338,24 +1407,20 @@ MCQUnit<Impl>::reallocBoundTable()
     //uint8_t *buf_p = new uint8_t[16 * mcq->btNumWays];
     //uint8_t *buf_p = new uint8_t[64 * mcq->btNumWays];
     uint8_t *buf_p = new uint8_t[32 * mcq->btNumWays];
+    uint8_t *buf_zero = new uint8_t[32 * mcq->btNumWays];
+    memset(buf_zero, 0, 32 * mcq->btNumWays);
  
     //for (int i=0; i<4096; i++) {
-    for (int i=0; i<65536; i++) {
-        //cpu->thread[tid]->getMemProxy().readBlob(btBaseAddr + (i << (N+4)),
-        //                                          buf_p, 16 * mcq->btNumWays);
-
-        //cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+4)),
-        //                                          buf_p, 16 * mcq->btNumWays);
-        //cpu->thread[tid]->getMemProxy().readBlob(btBaseAddr + (i << (N+6)),
-        //                                          buf_p, 64 * mcq->btNumWays);
-
-        //cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+6)),
-        //                                          buf_p, 64 * mcq->btNumWays);
+    //for (int i=0; i<65536; i++) {
+    for (int i=65535; i>=0; i--) {
         cpu->thread[tid]->getMemProxy().readBlob(btBaseAddr + (i << (N+5)),
                                                   buf_p, 32 * mcq->btNumWays);
 
         cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+5)),
                                                   buf_p, 32 * mcq->btNumWays);
+
+        cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+5)) + 32 * mcq->btNumWays,
+                                                  buf_zero, 32 * mcq->btNumWays);
     }
 
     //cpu->thread[tid]->getProcessPtr()->pTable->unmap(btBaseAddr, mcq->btSize);
@@ -1371,6 +1436,58 @@ MCQUnit<Impl>::reallocBoundTable()
 
     delete[] buf_p;
 }
+
+//template <class Impl>
+//void
+//MCQUnit<Impl>::reallocBoundTable()
+//{
+//    uint64_t btBaseAddr_new = mcq->btBaseAddr + mcq->btSize;
+//    uint64_t btSize_new = (uint64_t) (mcq->btSize << 1); // x2
+//    int btNumWays_new = (mcq->btNumWays << 1); // x2
+//    
+//    ThreadID tid = mcqID;
+//
+//    cpu->thread[tid]->getProcessPtr()->allocateMem(btBaseAddr_new, btSize_new);
+//
+//    int N = log2(mcq->btNumWays);
+//    int N_new = log2(btNumWays_new);
+//
+//    //uint8_t *buf_p = new uint8_t[16 * mcq->btNumWays];
+//    //uint8_t *buf_p = new uint8_t[64 * mcq->btNumWays];
+//    uint8_t *buf_p = new uint8_t[32 * mcq->btNumWays];
+// 
+//    //for (int i=0; i<4096; i++) {
+//    for (int i=0; i<65536; i++) {
+//        //cpu->thread[tid]->getMemProxy().readBlob(btBaseAddr + (i << (N+4)),
+//        //                                          buf_p, 16 * mcq->btNumWays);
+//
+//        //cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+4)),
+//        //                                          buf_p, 16 * mcq->btNumWays);
+//        //cpu->thread[tid]->getMemProxy().readBlob(btBaseAddr + (i << (N+6)),
+//        //                                          buf_p, 64 * mcq->btNumWays);
+//
+//        //cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+6)),
+//        //                                          buf_p, 64 * mcq->btNumWays);
+//        cpu->thread[tid]->getMemProxy().readBlob(btBaseAddr + (i << (N+5)),
+//                                                  buf_p, 32 * mcq->btNumWays);
+//
+//        cpu->thread[tid]->getMemProxy().writeBlob(btBaseAddr_new + (i << (N_new+5)),
+//                                                  buf_p, 32 * mcq->btNumWays);
+//    }
+//
+//    //cpu->thread[tid]->getProcessPtr()->pTable->unmap(btBaseAddr, mcq->btSize);
+//    mcq->btBaseAddr = btBaseAddr_new;
+//    mcq->btSize = btSize_new;
+//    mcq->btNumWays = btNumWays_new;
+//
+//    this->btBaseAddr = btBaseAddr_new;
+//    this->btNumWays = btNumWays_new;
+//
+//    printf("[AOS] Reallocate bound table, btBaseAddr: %lu btSize: %lu "
+//            "btNumWays: %d\n", btBaseAddr_new, btSize_new, btNumWays_new);
+//
+//    delete[] buf_p;
+//}
 
 #endif//__CPU_O3_MCQ_UNIT_IMPL_HH__
 
