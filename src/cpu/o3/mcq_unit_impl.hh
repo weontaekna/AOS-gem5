@@ -349,7 +349,9 @@ MCQUnit<Impl>::completeDataAccess(PacketPtr pkt)
             Addr lbndData = (bndData & 0xFFFFFFFF);
             //Addr ubndData = lbndData + (bndData >> 32);
             Addr ubndData = lbndData + (bndData >> 32);
+						bool isLoad = inst->isLoad();
 
+						//inst->dump();
             DPRINTF(MCQUnit, "CompleteAccess check, addr: %lu effSize: %u lbndData: %lu "
                    "ubndData: %lu for inst [sn:%lu]\n",
                     addr, effSize, lbndData, ubndData, inst->seqNum);
@@ -379,7 +381,7 @@ MCQUnit<Impl>::completeDataAccess(PacketPtr pkt)
                         iter->completed() = true;
                         succeed = true;
                     }
-                } else if (!inst->isNeonLoad() && boundCheck(addr, effSize, lbndData, ubndData)) {
+                } else if (!inst->isNeonLoad() && boundCheck(addr, effSize, lbndData, ubndData, isLoad)) {
                     if (iter->count != 0) {
                         DPRINTF(MCQCheck, "Passed boundCheck! bndAddr: %lu addr: %lu effSize: %u "
                                 "lbndData: %lu ubndData: %lu index: %lu count: %u PAC: %lu Hash: %lu [sn:%lli]\n",
@@ -1067,7 +1069,7 @@ MCQUnit<Impl>::neonBoundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ub
 
 template <class Impl>
 bool
-MCQUnit<Impl>::boundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndData)
+MCQUnit<Impl>::boundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndData, bool isLoad)
 {
     uint64_t C = 0;
     //[CHANGE] if ((bit(addr, 32) == 0) && (bit(lbndData, 32) == 1))
@@ -1083,11 +1085,15 @@ MCQUnit<Impl>::boundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndDa
 
     //return (addr >= lbndData && addr <= (ubndData+1));
     //return (addr >= (lbndData - 512) && addr <= (ubndData + 512));
-    //return (addr >= lbndData && (addr + effSize - 1) <= ubndData);
 
-		Addr effLowBnd = lbndData - (lbndData % effSize);
+		if (isLoad) 
+	    return (addr >= lbndData && addr <= ubndData);
+		else
+	    return (addr >= lbndData && (addr + effSize) <= ubndData);
+
+		//Addr effLowBnd = lbndData - (lbndData % effSize);
 		//Addr effUppBnd = ubndData + (ubndData % effSize);
-    return (addr >= effLowBnd && addr <= (ubndData+1));
+    //return (addr >= effLowBnd && addr <= (ubndData+1));
 }
 
 template <class Impl>
@@ -1107,9 +1113,9 @@ MCQUnit<Impl>::occupancyCheck(Addr addr, Addr lbndData, Addr ubndData, bool empt
             addr, lbndData, ubndData);
 
     if (empty)
-        return (lbndData == 0);
+        return (lbndData == 0); // bndstr
     else
-        return (addr == lbndData || addr == ubndData);
+        return (addr == lbndData || addr == ubndData); // bndclr
 }
 
 template <class Impl>

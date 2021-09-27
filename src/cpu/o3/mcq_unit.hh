@@ -312,7 +312,7 @@ class MCQUnit
 
     void setMCQEntry(typename MChkQueue::iterator& iter);
 
-    bool boundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndData);
+    bool boundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndData, bool isLoad);
 
     bool neonBoundCheck(Addr addr, uint8_t effSize, Addr lbndData, Addr ubndData);
 
@@ -647,7 +647,7 @@ MCQUnit<Impl>::check(MCQRequest *req, int mchk_idx)
                     req->discard();
 
                     return NoFault;
-                } else if (!inst->isNeonLoad() && boundCheck(addr, effSize, lbndData, ubndData)) {
+                } else if (!inst->isNeonLoad() && boundCheck(addr, effSize, lbndData, ubndData, inst->isLoad())) {
                     DPRINTF(MCQUnit, "Passed boundCheck by data forwarding! "
                     "bndAddr: %lu addr: %lu effSize: %u lbndData: %lu ubndData: %lu count: %u "
                     "PAC: %lu [sn:%lli]\n", iter->bndAddr, addr, effSize, lbndData, ubndData,
